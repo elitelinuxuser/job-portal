@@ -1,36 +1,253 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Freelancer Platform
 
-## Getting Started
+A modern, invite-only platform connecting companies with photography and videography freelancers for gig bookings.
 
-First, run the development server:
+## 🚀 Features
+
+### For Companies
+- **Complete Profile Management** - Set up company details, logo, and contact information
+- **Job Posting** - Create detailed job postings with dates, budgets, and contract terms
+- **Review Applications** - View freelancer profiles, portfolios, and equipment lists
+- **Booking Management** - Send booking requests and track acceptance status
+- **Payment Tracking** - Mark bookings as paid with amounts and dates
+
+### For Freelancers
+- **Professional Profiles** - Showcase skills, equipment, and portfolios
+- **Browse Opportunities** - View all active job postings from companies
+- **Simple Applications** - Express interest with optional messages
+- **Contract Review** - Full contract preview before acceptance
+- **Booking Management** - Accept/reject requests with calendar integration
+
+### For Admins
+- **Invite System** - Create and manage invitation links with role assignment
+- **User Management** - View all users and track onboarding status
+- **Platform Metrics** - Comprehensive analytics and statistics
+- **Full Oversight** - Monitor jobs, bookings, and platform activity
+
+## 🛠 Tech Stack
+
+- **Framework**: Next.js 16 with App Router and Turbopack
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Authentication**: Clerk (invite-only mode)
+- **Database**: Neon PostgreSQL + Drizzle ORM
+- **File Storage**: Vercel Blob
+- **Forms**: React Hook Form + Zod validation
+- **Hosting**: Vercel
+- **State Management**: React Server Components + Server Actions
+
+## 📋 Prerequisites
+
+- Node.js 18+ installed
+- Yarn package manager
+- Accounts on:
+  - [Clerk](https://clerk.com) - Authentication
+  - [Neon](https://neon.tech) - Database
+  - [Vercel](https://vercel.com) - Hosting
+
+## 🚀 Quick Start
+
+### 1. Clone & Install
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd freelancer-platform
+yarn install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Set Up Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create `.env.local` file:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+# Clerk
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxx
+CLERK_SECRET_KEY=sk_test_xxxxx
+CLERK_WEBHOOK_SECRET=whsec_xxxxx
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
 
-## Learn More
+# Database
+DATABASE_URL=postgresql://user:password@host/db
 
-To learn more about Next.js, take a look at the following resources:
+# Vercel Blob
+BLOB_READ_WRITE_TOKEN=vercel_blob_xxxxx
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. Set Up Database
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+yarn db:push
+```
 
-## Deploy on Vercel
+### 4. Run Development Server
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+yarn dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000)
+
+## 📖 Documentation
+
+- **[Setup Guide](./SETUP.md)** - Detailed setup instructions
+- **[Deployment Guide](./DEPLOYMENT.md)** - Production deployment steps
+- **[Database Schema](./lib/db/README.md)** - Schema documentation
+
+## 🏗 Project Structure
+
+```
+freelancer-platform/
+├── app/
+│   ├── (auth)/              # Authentication pages
+│   ├── (admin)/             # Admin dashboard
+│   ├── (company)/           # Company portal
+│   ├── (freelancer)/        # Freelancer portal
+│   └── api/                 # API routes
+├── components/
+│   ├── ui/                  # shadcn/ui components
+│   ├── admin/               # Admin components
+│   ├── company/             # Company components
+│   └── freelancer/          # Freelancer components
+├── lib/
+│   ├── actions/             # Server actions
+│   ├── db/                  # Database schema & config
+│   └── validations/         # Form validations
+└── middleware.ts            # Authentication & routing
+```
+
+## 🔐 Authentication Flow
+
+1. **Invite-Only System** - Users can only sign up with admin-created invitation links
+2. **Role Assignment** - Each invite has a specific role (admin/company/freelancer)
+3. **Onboarding Required** - New users complete profile before accessing features
+4. **Role-Based Access** - Middleware enforces route protection by user role
+
+## 💾 Database Schema
+
+The platform uses 8 core tables:
+
+- `users` - User accounts (synced from Clerk)
+- `invites` - Invitation links
+- `company_profiles` - Company details
+- `freelancer_profiles` - Freelancer portfolios
+- `job_posts` - Job postings with contract terms
+- `job_responses` - Freelancer applications
+- `booking_requests` - Booking offers
+- `payments` - Payment tracking
+
+## 🎨 UI Components
+
+Built with shadcn/ui for consistency and maintainability:
+
+- Forms with validation
+- Dialogs and modals
+- Tables and cards
+- Badges and buttons
+- Toast notifications
+
+## 📱 Responsive Design
+
+The platform is fully responsive and works seamlessly on:
+- Desktop (1920px+)
+- Laptop (1280px - 1920px)
+- Tablet (768px - 1280px)
+- Mobile (320px - 768px)
+
+## 🧪 Testing
+
+Run the development server and test critical flows:
+
+1. **Admin Flow**:
+   - Create invitation links
+   - View user list
+   - Check platform metrics
+
+2. **Company Flow**:
+   - Complete onboarding
+   - Post a job
+   - Review freelancer responses
+   - Send booking request
+   - Mark as paid
+
+3. **Freelancer Flow**:
+   - Complete onboarding
+   - Browse jobs
+   - Apply to jobs
+   - Accept booking with contract review
+   - Download calendar event
+
+## 🚀 Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed production deployment instructions.
+
+Quick deploy to Vercel:
+
+```bash
+vercel
+```
+
+## 📊 Performance
+
+Built with Next.js 16 features for optimal performance:
+
+- Server Components for reduced JavaScript
+- Turbopack for faster builds
+- Automatic code splitting
+- Image optimization
+- Static generation where possible
+
+## 🔧 Scripts
+
+```bash
+yarn dev          # Start development server
+yarn build        # Build for production
+yarn start        # Start production server
+yarn lint         # Run ESLint
+yarn db:generate  # Generate database migrations
+yarn db:push      # Push schema to database
+yarn db:studio    # Open Drizzle Studio
+```
+
+## 🤝 Contributing
+
+This is a private project. For authorized contributors:
+
+1. Create a feature branch
+2. Make your changes
+3. Test thoroughly
+4. Create a pull request
+
+## 📝 License
+
+Private - All rights reserved
+
+## 🐛 Troubleshooting
+
+### Build Errors
+- Clear `.next` folder and rebuild
+- Verify all dependencies are installed
+- Check TypeScript errors
+
+### Authentication Issues
+- Verify Clerk API keys
+- Check middleware configuration
+- Ensure webhooks are configured
+
+### Database Issues
+- Verify DATABASE_URL is correct
+- Run `yarn db:push` to sync schema
+- Check Neon dashboard for errors
+
+## 📧 Support
+
+For issues or questions:
+1. Check documentation
+2. Review error logs
+3. Contact development team
+
+---
+
+Built with ❤️ using Next.js 16, TypeScript, and modern web technologies.
