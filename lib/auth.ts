@@ -18,8 +18,16 @@ export async function getCurrentUser() {
 }
 
 export async function getUserRole() {
-  const { sessionClaims } = await auth()
-  return sessionClaims?.metadata?.role as string | undefined
+  const { userId } = await auth()
+  
+  if (!userId) {
+    return undefined
+  }
+  
+  const client = await clerkClient()
+  const user = await client.users.getUser(userId)
+  
+  return user.publicMetadata?.role as string | undefined
 }
 
 export async function updateUserMetadata(userId: string, metadata: Record<string, any>) {

@@ -9,17 +9,7 @@ import { toast } from 'sonner'
 import { deleteInvite } from '@/lib/actions/invites'
 import { format } from 'date-fns'
 
-type Invite = {
-  id: string
-  code: string
-  role: 'admin' | 'company' | 'freelancer'
-  status: 'pending' | 'accepted' | 'expired'
-  expiresAt: Date | null
-  usedAt: Date | null
-  createdAt: Date
-}
-
-export function InvitesList({ invites }: { invites: Invite[] }) {
+export function InvitesList({ invites }: { invites: any[] }) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   function getInviteUrl(code: string) {

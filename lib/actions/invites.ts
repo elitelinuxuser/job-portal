@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 import { invites, users } from '@/lib/db/schema'
 import { requireRole } from '@/lib/auth'
 import { auth } from '@clerk/nextjs/server'
-import { eq } from 'drizzle-orm'
+import { eq, desc } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
 export async function createInvite(role: 'admin' | 'company' | 'freelancer', expiresInDays?: number) {
@@ -38,9 +38,10 @@ export async function createInvite(role: 'admin' | 'company' | 'freelancer', exp
 export async function getInvites() {
   await requireRole('admin')
   
-  const allInvites = await db.query.invites.findMany({
-    orderBy: (invites, { desc }) => [desc(invites.createdAt)],
-  })
+  const allInvites = await db
+    .select()
+    .from(invites)
+    .orderBy(desc(invites.createdAt))
 
   return allInvites
 }

@@ -1,4 +1,4 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { clerkMiddleware, createRouteMatcher, clerkClient } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)'])
@@ -7,7 +7,7 @@ const isCompanyRoute = createRouteMatcher(['/company(.*)'])
 const isFreelancerRoute = createRouteMatcher(['/freelancer(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth()
+  const { userId } = await auth()
 
   // Allow public routes
   if (isPublicRoute(req)) {
@@ -21,11 +21,15 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl)
   }
 
+  // Fetch user metadata directly from Clerk
+  const client = await clerkClient()
+  const user = await client.users.getUser(userId)
+
   // Get user role from metadata
-  const role = sessionClaims?.metadata?.role as string | undefined
+  const role = user.publicMetadata?.role as string | undefined
 
   // Check if user has completed onboarding
-  const onboardingStatus = sessionClaims?.metadata?.onboardingStatus as string | undefined
+  const onboardingStatus = user.publicMetadata?.onboardingStatus as string | undefined
 
   // Role-based route protection
   if (isAdminRoute(req) && role !== 'admin') {

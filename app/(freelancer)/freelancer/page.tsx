@@ -7,7 +7,7 @@ import { Eye, Calendar, MapPin, Briefcase } from 'lucide-react'
 import { format } from 'date-fns'
 
 export default async function FreelancerDashboard() {
-  const jobs = await getAllActiveJobs()
+  const jobs: any[] = await getAllActiveJobs()
 
   return (
     <div className="space-y-6">

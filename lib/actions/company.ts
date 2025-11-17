@@ -23,27 +23,51 @@ export async function createCompanyProfile(data: {
     throw new Error('Unauthorized')
   }
 
-  // Create company profile
-  const [profile] = await db.insert(companyProfiles).values({
-    userId,
-    ...data,
-  }).returning()
-
-  // Update user onboarding status
-  await db
-    .update(users)
-    .set({
-      onboardingStatus: 'complete',
-      updatedAt: new Date(),
+  try {
+    // Check if user exists in database
+    let userExists = await db.query.users.findFirst({
+      where: eq(users.id, userId),
     })
-    .where(eq(users.id, userId))
 
-  // Update Clerk metadata
-  await updateUserMetadata(userId, { onboardingStatus: 'complete' })
+    // If user doesn't exist (webhook might not have fired in dev), create it
+    if (!userExists) {
+      const { clerkClient } = await import('@clerk/nextjs/server')
+      const client = await clerkClient()
+      const clerkUser = await client.users.getUser(userId)
+      
+      await db.insert(users).values({
+        id: userId,
+        email: clerkUser.emailAddresses[0].emailAddress,
+        role: (clerkUser.publicMetadata?.role as 'admin' | 'company' | 'freelancer') || 'company',
+        onboardingStatus: 'incomplete',
+      })
+    }
 
-  revalidatePath('/company')
-  
-  return { success: true, profile }
+    // Create company profile
+    const [profile] = await db.insert(companyProfiles).values({
+      userId,
+      ...data,
+    }).returning()
+
+    // Update user onboarding status
+    await db
+      .update(users)
+      .set({
+        onboardingStatus: 'complete',
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+
+    // Update Clerk metadata
+    await updateUserMetadata(userId, { onboardingStatus: 'complete' })
+
+    revalidatePath('/company')
+    
+    return { success: true, profile }
+  } catch (error) {
+    console.error('Error creating company profile:', error)
+    throw error
+  }
 }
 
 export async function getCompanyProfile() {

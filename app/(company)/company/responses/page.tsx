@@ -2,20 +2,19 @@ import { getCompanyJobs } from '@/lib/actions/jobs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { SendBookingRequest } from '@/components/company/send-booking-request'
-import { Avatar } from '@/components/ui/avatar'
 
 export default async function ResponsesPage() {
   const jobs = await getCompanyJobs()
 
   // Get all responses across all jobs
   const allResponses = jobs.flatMap((job) =>
-    job.responses.map((response) => ({
+    job.responses.map((response: any) => ({
       ...response,
       job,
     }))
   )
 
-  const interestedResponses = allResponses.filter((r) => r.status === 'interested')
+  const interestedResponses = allResponses.filter((r: any) => r.status === 'interested')
 
   return (
     <div className="space-y-6">

@@ -15,7 +15,6 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   role: userRoleEnum('role').notNull(),
   onboardingStatus: onboardingStatusEnum('onboarding_status').notNull().default('incomplete'),
-  inviteId: uuid('invite_id').references(() => invites.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
@@ -132,10 +131,6 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     references: [freelancerProfiles.userId],
   }),
   invitesCreated: many(invites),
-  invite: one(invites, {
-    fields: [users.inviteId],
-    references: [invites.id],
-  }),
 }))
 
 export const companyProfilesRelations = relations(companyProfiles, ({ one, many }) => ({

@@ -24,27 +24,51 @@ export async function createFreelancerProfile(data: {
     throw new Error('Unauthorized')
   }
 
-  // Create freelancer profile
-  const [profile] = await db.insert(freelancerProfiles).values({
-    userId,
-    ...data,
-  }).returning()
-
-  // Update user onboarding status
-  await db
-    .update(users)
-    .set({
-      onboardingStatus: 'complete',
-      updatedAt: new Date(),
+  try {
+    // Check if user exists in database
+    let userExists = await db.query.users.findFirst({
+      where: eq(users.id, userId),
     })
-    .where(eq(users.id, userId))
 
-  // Update Clerk metadata
-  await updateUserMetadata(userId, { onboardingStatus: 'complete' })
+    // If user doesn't exist (webhook might not have fired in dev), create it
+    if (!userExists) {
+      const { clerkClient } = await import('@clerk/nextjs/server')
+      const client = await clerkClient()
+      const clerkUser = await client.users.getUser(userId)
+      
+      await db.insert(users).values({
+        id: userId,
+        email: clerkUser.emailAddresses[0]?.emailAddress || '',
+        role: 'freelancer',
+        onboardingStatus: 'incomplete',
+      })
+    }
 
-  revalidatePath('/freelancer')
-  
-  return { success: true, profile }
+    // Create freelancer profile
+    const [profile] = await db.insert(freelancerProfiles).values({
+      userId,
+      ...data,
+    }).returning()
+
+    // Update user onboarding status
+    await db
+      .update(users)
+      .set({
+        onboardingStatus: 'complete',
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+
+    // Update Clerk metadata
+    await updateUserMetadata(userId, { onboardingStatus: 'complete' })
+
+    revalidatePath('/freelancer')
+    
+    return { success: true, profile }
+  } catch (error) {
+    console.error('Error creating freelancer profile:', error)
+    throw new Error('Failed to create profile')
+  }
 }
 
 export async function getFreelancerProfile() {

@@ -5,9 +5,10 @@ import { RespondToJobForm } from '@/components/freelancer/respond-to-job-form'
 import { notFound } from 'next/navigation'
 import { Calendar, MapPin, Briefcase, Clock, Building } from 'lucide-react'
 
-export default async function JobDetailPage({ params }: { params: { id: string } }) {
-  const job = await getJobById(params.id)
-  const hasResponded = await hasRespondedToJob(params.id)
+export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const job: any = await getJobById(id)
+  const hasResponded = await hasRespondedToJob(id)
 
   if (!job) {
     notFound()
