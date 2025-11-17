@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
-import { invites } from '@/lib/db/schema'
+import { invites, users } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
@@ -43,8 +43,19 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Set the user's role metadata
+    // Check if user already has a role (prevent role override for existing users)
     const client = await clerkClient()
+    const user = await client.users.getUser(userId)
+    const existingRole = user.publicMetadata?.role as string | undefined
+
+    if (existingRole) {
+      return NextResponse.json(
+        { error: 'You already have an account with a role assigned. This invite is for new users only.' },
+        { status: 403 }
+      )
+    }
+
+    // Set the user's role metadata
     await client.users.updateUserMetadata(userId, {
       publicMetadata: {
         role: invite.role,

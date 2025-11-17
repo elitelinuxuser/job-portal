@@ -1,5 +1,6 @@
 import { SignUp } from '@clerk/nextjs'
 import { redirect } from 'next/navigation'
+import { auth, clerkClient } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
 import { invites } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
@@ -11,6 +12,34 @@ export default async function SignUpPage({
 }) {
   const params = await searchParams
   const inviteCode = params.invite
+
+  // Check if user is already logged in
+  const { userId } = await auth()
+  if (userId && inviteCode) {
+    // User is already logged in and trying to use an invite
+    const client = await clerkClient()
+    const user = await client.users.getUser(userId)
+    const existingRole = user.publicMetadata?.role as string | undefined
+
+    if (existingRole) {
+      // User already has a role - redirect them to their dashboard
+      return (
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center max-w-md p-8 bg-yellow-50 rounded-lg">
+            <h1 className="text-2xl font-bold text-yellow-800">Already Registered</h1>
+            <p className="mt-2 text-yellow-600">
+              You already have an account. Invitation links are for new users only.
+            </p>
+            <p className="mt-4">
+              <a href={`/${existingRole}`} className="text-blue-600 hover:underline">
+                Go to your dashboard →
+              </a>
+            </p>
+          </div>
+        </div>
+      )
+    }
+  }
 
   // If there's an invite code, validate it
   if (inviteCode) {
