@@ -1,6 +1,6 @@
 import { requireRole } from '@/lib/auth'
 import { UserButton } from '@clerk/nextjs'
-import Link from 'next/link'
+import { NavLink } from '@/components/nav-link'
 import { 
   Briefcase, 
   Inbox,
@@ -22,20 +22,14 @@ export default async function FreelancerLayout({
           <h1 className="text-xl font-bold">Freelancer</h1>
         </div>
         <nav className="p-4 space-y-2">
-          <Link
-            href="/freelancer"
-            className="flex items-center gap-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-          >
+          <NavLink href="/freelancer">
             <Briefcase className="w-5 h-5" />
             <span>Browse Jobs</span>
-          </Link>
-          <Link
-            href="/freelancer/bookings"
-            className="flex items-center gap-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-          >
+          </NavLink>
+          <NavLink href="/freelancer/bookings">
             <Calendar className="w-5 h-5" />
             <span>My Bookings</span>
-          </Link>
+          </NavLink>
         </nav>
       </aside>
 

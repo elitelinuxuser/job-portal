@@ -1,6 +1,6 @@
 import { requireRole } from '@/lib/auth'
 import { UserButton } from '@clerk/nextjs'
-import Link from 'next/link'
+import { NavLink } from '@/components/nav-link'
 import { 
   LayoutDashboard, 
   Users, 
@@ -23,34 +23,22 @@ export default async function AdminLayout({
           <h1 className="text-xl font-bold">Admin Panel</h1>
         </div>
         <nav className="p-4 space-y-2">
-          <Link
-            href="/admin"
-            className="flex items-center gap-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-          >
+          <NavLink href="/admin">
             <LayoutDashboard className="w-5 h-5" />
             <span>Dashboard</span>
-          </Link>
-          <Link
-            href="/admin/invites"
-            className="flex items-center gap-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-          >
+          </NavLink>
+          <NavLink href="/admin/invites">
             <Mail className="w-5 h-5" />
             <span>Invites</span>
-          </Link>
-          <Link
-            href="/admin/users"
-            className="flex items-center gap-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-          >
+          </NavLink>
+          <NavLink href="/admin/users">
             <Users className="w-5 h-5" />
             <span>Users</span>
-          </Link>
-          <Link
-            href="/admin/metrics"
-            className="flex items-center gap-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-          >
+          </NavLink>
+          <NavLink href="/admin/metrics">
             <BarChart3 className="w-5 h-5" />
             <span>Metrics</span>
-          </Link>
+          </NavLink>
         </nav>
       </aside>
 

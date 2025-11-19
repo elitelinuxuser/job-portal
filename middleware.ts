@@ -7,7 +7,7 @@ const isCompanyRoute = createRouteMatcher(['/company(.*)'])
 const isFreelancerRoute = createRouteMatcher(['/freelancer(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId } = await auth()
+  const { userId, sessionClaims } = await auth()
 
   // Allow public routes
   if (isPublicRoute(req)) {
@@ -21,15 +21,17 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl)
   }
 
-  // Fetch user metadata directly from Clerk
-  const client = await clerkClient()
-  const user = await client.users.getUser(userId)
+  // Get user role and onboarding status from session claims (no API call needed!)
+  let role = sessionClaims?.publicMetadata?.role as string | undefined
+  let onboardingStatus = sessionClaims?.publicMetadata?.onboardingStatus as string | undefined
 
-  // Get user role from metadata
-  const role = user.publicMetadata?.role as string | undefined
-
-  // Check if user has completed onboarding
-  const onboardingStatus = user.publicMetadata?.onboardingStatus as string | undefined
+  // Only fetch from Clerk API if session claims are missing (rare case, e.g., just after signup)
+  if (!role) {
+    const client = await clerkClient()
+    const user = await client.users.getUser(userId)
+    role = user.publicMetadata?.role as string | undefined
+    onboardingStatus = user.publicMetadata?.onboardingStatus as string | undefined
+  }
 
   // Role-based route protection
   if (isAdminRoute(req) && role !== 'admin') {

@@ -1,6 +1,6 @@
 import { requireRole } from '@/lib/auth'
 import { UserButton } from '@clerk/nextjs'
-import Link from 'next/link'
+import { NavLink } from '@/components/nav-link'
 import { 
   Briefcase, 
   Plus, 
@@ -23,34 +23,22 @@ export default async function CompanyLayout({
           <h1 className="text-xl font-bold">Company Portal</h1>
         </div>
         <nav className="p-4 space-y-2">
-          <Link
-            href="/company"
-            className="flex items-center gap-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-          >
+          <NavLink href="/company">
             <Briefcase className="w-5 h-5" />
             <span>My Jobs</span>
-          </Link>
-          <Link
-            href="/company/post-job"
-            className="flex items-center gap-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-          >
+          </NavLink>
+          <NavLink href="/company/post-job">
             <Plus className="w-5 h-5" />
             <span>Post Job</span>
-          </Link>
-          <Link
-            href="/company/responses"
-            className="flex items-center gap-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-          >
+          </NavLink>
+          <NavLink href="/company/responses">
             <Inbox className="w-5 h-5" />
             <span>Responses</span>
-          </Link>
-          <Link
-            href="/company/bookings"
-            className="flex items-center gap-3 px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-          >
+          </NavLink>
+          <NavLink href="/company/bookings">
             <Calendar className="w-5 h-5" />
             <span>Bookings</span>
-          </Link>
+          </NavLink>
         </nav>
       </aside>
 

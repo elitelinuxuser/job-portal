@@ -2,18 +2,23 @@ import { auth, clerkClient } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
 export default async function HomePage() {
-  const { userId } = await auth()
+  const { userId, sessionClaims } = await auth()
 
   if (!userId) {
     redirect('/sign-in')
   }
 
-  // Fetch user directly from Clerk to get fresh metadata
-  const client = await clerkClient()
-  const user = await client.users.getUser(userId)
+  // Get role from session claims first (faster)
+  let role = sessionClaims?.publicMetadata?.role as string | undefined
+  let onboardingStatus = sessionClaims?.publicMetadata?.onboardingStatus as string | undefined
 
-  const role = user.publicMetadata?.role as string | undefined
-  const onboardingStatus = user.publicMetadata?.onboardingStatus as string | undefined
+  // Only fetch from Clerk API if session claims are missing
+  if (!role) {
+    const client = await clerkClient()
+    const user = await client.users.getUser(userId)
+    role = user.publicMetadata?.role as string | undefined
+    onboardingStatus = user.publicMetadata?.onboardingStatus as string | undefined
+  }
 
   // Redirect based on role
   if (role === 'admin') {
