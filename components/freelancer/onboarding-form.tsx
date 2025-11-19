@@ -93,8 +93,8 @@ export function FreelancerOnboardingForm() {
       })
 
       if (result.success) {
-        toast.success('Profile created successfully!')
-        router.push('/freelancer')
+        toast.success('Profile submitted for review!')
+        router.push('/freelancer/pending')
         router.refresh()
       }
     } catch (error) {

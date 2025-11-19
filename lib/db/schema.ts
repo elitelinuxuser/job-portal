@@ -42,6 +42,7 @@ export const companyProfiles = pgTable('company_profiles', {
   location: text('location').notNull(), // Based in
   startedIn: integer('started_in'), // Year
   logoUrl: text('logo_url'),
+  verificationStatus: verificationStatusEnum('verification_status').notNull().default('pending'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
@@ -53,7 +54,7 @@ export const freelancerProfiles = pgTable('freelancer_profiles', {
   name: text('name').notNull(),
   location: text('location').notNull(),
   photoUrl: text('photo_url'),
-  verificationStatus: verificationStatusEnum('verification_status').notNull().default('unverified'),
+  verificationStatus: verificationStatusEnum('verification_status').notNull().default('pending'),
   equipmentList: jsonb('equipment_list').$type<string[]>().notNull().default([]),
   portfolioLinks: jsonb('portfolio_links').$type<string[]>().notNull().default([]),
   whatsappNumber: varchar('whatsapp_number', { length: 15 }).notNull(),

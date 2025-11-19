@@ -80,8 +80,8 @@ export function OnboardingForm() {
       })
 
       if (result.success) {
-        toast.success('Profile created successfully!')
-        router.push('/company')
+        toast.success('Profile submitted for review!')
+        router.push('/company/pending')
         router.refresh()
       }
     } catch (error) {

@@ -5,7 +5,8 @@ import {
   LayoutDashboard, 
   Users, 
   Mail, 
-  BarChart3 
+  BarChart3,
+  CheckCircle
 } from 'lucide-react'
 
 export default async function AdminLayout({
@@ -26,6 +27,10 @@ export default async function AdminLayout({
           <NavLink href="/admin">
             <LayoutDashboard className="w-5 h-5" />
             <span>Dashboard</span>
+          </NavLink>
+          <NavLink href="/admin/approvals">
+            <CheckCircle className="w-5 h-5" />
+            <span>Approvals</span>
           </NavLink>
           <NavLink href="/admin/invites">
             <Mail className="w-5 h-5" />

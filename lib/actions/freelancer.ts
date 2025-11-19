@@ -118,6 +118,15 @@ export async function respondToJob(data: {
     throw new Error('Unauthorized')
   }
 
+  // Check verification status
+  const profile = await db.query.freelancerProfiles.findFirst({
+    where: eq(freelancerProfiles.userId, userId),
+  })
+
+  if (!profile || profile.verificationStatus !== 'verified') {
+    throw new Error('Your profile must be verified before you can apply for jobs. Please wait for admin approval.')
+  }
+
   // Check if already responded
   const existing = await db.query.jobResponses.findFirst({
     where: and(

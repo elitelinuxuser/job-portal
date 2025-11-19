@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Plus, Eye } from 'lucide-react'
 import { format } from 'date-fns'
 import { ToggleJobStatus } from '@/components/company/toggle-job-status'
+import { redirect } from 'next/navigation'
 
 export default async function CompanyDashboard() {
   const profile = await getCompanyProfile()
@@ -16,12 +17,25 @@ export default async function CompanyDashboard() {
     return null // Will redirect to onboarding via middleware
   }
 
+  // Redirect to pending page if not verified
+  if (profile.verificationStatus === 'pending') {
+    redirect('/company/pending')
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">My Jobs</h1>
-          <p className="text-gray-600 mt-1">Manage your job postings</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">My Jobs</h1>
+            <p className="text-gray-600 mt-1">Manage your job postings</p>
+          </div>
+          <Badge
+            variant={profile.verificationStatus === 'verified' ? 'default' : 'secondary'}
+            className={profile.verificationStatus === 'verified' ? 'bg-green-600' : 'bg-yellow-100 text-yellow-800'}
+          >
+            {profile.verificationStatus === 'verified' ? '✓ Verified' : '⏳ Pending Approval'}
+          </Badge>
         </div>
         <Link href="/company/post-job">
           <Button>
