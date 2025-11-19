@@ -12,7 +12,10 @@ interface NavLinkProps {
 
 export function NavLink({ href, children, className }: NavLinkProps) {
   const pathname = usePathname()
-  const isActive = pathname === href || (href !== '/' && pathname.startsWith(href))
+  
+  // Exact match for the href
+  // For root paths like /admin, /company, /freelancer - only match exactly
+  const isActive = pathname === href
 
   return (
     <Link
