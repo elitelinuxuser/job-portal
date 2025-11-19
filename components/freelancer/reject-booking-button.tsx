@@ -66,3 +66,5 @@ export function RejectBookingButton({ bookingId }: { bookingId: string }) {
   )
 }
 
+
+

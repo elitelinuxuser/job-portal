@@ -134,3 +134,5 @@ All tables use proper foreign keys and relations for type-safe joins:
 4. JSONB columns are used for arrays (dates, equipment, portfolios)
 5. Contract details are stored as JSONB in booking_requests for historical reference
 
+
+

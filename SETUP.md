@@ -147,3 +147,5 @@ Open [http://localhost:3000](http://localhost:3000)
 - Verify all Clerk environment variables
 - Check Clerk Dashboard for error logs
 
+
+
