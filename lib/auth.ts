@@ -28,7 +28,8 @@ export const getUserRole = cache(async () => {
   }
   
   // Try to get role from session claims first (faster)
-  const roleFromClaims = sessionClaims?.publicMetadata?.role as string | undefined
+  const publicMetadata = (sessionClaims as any)?.publicMetadata as { role?: string } | undefined
+  const roleFromClaims = publicMetadata?.role
   if (roleFromClaims) {
     return roleFromClaims
   }

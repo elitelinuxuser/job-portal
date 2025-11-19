@@ -9,8 +9,9 @@ export default async function HomePage() {
   }
 
   // Get role from session claims first (faster)
-  let role = sessionClaims?.publicMetadata?.role as string | undefined
-  let onboardingStatus = sessionClaims?.publicMetadata?.onboardingStatus as string | undefined
+  const publicMetadata = (sessionClaims as any)?.publicMetadata as { role?: string; onboardingStatus?: string } | undefined
+  let role = publicMetadata?.role
+  let onboardingStatus = publicMetadata?.onboardingStatus
 
   // Only fetch from Clerk API if session claims are missing
   if (!role) {
