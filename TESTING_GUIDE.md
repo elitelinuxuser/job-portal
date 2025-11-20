@@ -1,383 +1,295 @@
-# Testing Guide
-
-This guide outlines how to test the Freelancer Platform to ensure all features work correctly.
-
-## Pre-Testing Setup
-
-1. Ensure development server is running: `yarn dev`
-2. Database is set up and accessible
-3. Clerk authentication is configured
-4. All environment variables are set
-
-## Test Scenarios
-
-### 1. Admin Dashboard Testing
-
-#### Creating Invites
-1. Log in as admin
-2. Navigate to `/admin/invites`
-3. Click "Create Invite"
-4. Test each role:
-   - Create admin invite
-   - Create company invite
-   - Create freelancer invite
-5. Test expiration dates (optional field)
-6. Copy invite link and verify format
-7. Test deleting invites
-
-**Expected Results:**
-- ✓ Invites created with unique codes
-- ✓ Invite links are copyable
-- ✓ Status shows as "pending"
-- ✓ Can delete invites
-
-#### User Management
-1. Navigate to `/admin/users`
-2. Verify all users are listed
-3. Check onboarding status badges
-4. Verify role badges display correctly
-
-**Expected Results:**
-- ✓ All users visible
-- ✓ Correct roles displayed
-- ✓ Onboarding status accurate
-
-#### Platform Metrics
-1. Navigate to `/admin/metrics`
-2. Check all metric cards display numbers
-3. Verify recent activity (last 7 days)
-4. Check booking statistics
-
-**Expected Results:**
-- ✓ All counters show correct numbers
-- ✓ Percentages calculated correctly
-- ✓ Charts display properly
-
-### 2. Company Portal Testing
-
-#### Onboarding
-1. Use company invite link to sign up
-2. Fill onboarding form:
-   - Company name (required)
-   - Contact person (required)
-   - WhatsApp number (required)
-   - Location (required)
-   - Year started (optional)
-   - Logo upload (optional)
-3. Submit form
-
-**Expected Results:**
-- ✓ Profile created successfully
-- ✓ Redirected to company dashboard
-- ✓ Onboarding status updated to "complete"
-
-#### Posting Jobs
-1. Navigate to `/company/post-job`
-2. Fill job form:
-   - Title (min 5 chars)
-   - Description (min 20 chars)
-   - Location
-   - Budget
-   - Job type
-   - Time
-   - Add multiple dates
-   - Check contract options
-   - Add additional contract details
-3. Submit job
-
-**Expected Results:**
-- ✓ Job created and visible on dashboard
-- ✓ Job shows as "Active"
-- ✓ All dates saved correctly
-- ✓ Contract terms saved
-
-#### Managing Jobs
-1. View job on company dashboard
-2. Toggle job status (Active/Inactive)
-3. View responses count
-4. Click "View Responses"
-
-**Expected Results:**
-- ✓ Job status toggles correctly
-- ✓ Response count accurate
-- ✓ Can navigate to responses page
-
-#### Viewing Responses
-1. Wait for freelancer to apply
-2. Navigate to `/company/responses`
-3. View freelancer details:
-   - Name and email
-   - Location
-   - Equipment list
-   - Portfolio links
-   - Verification status
-4. Send booking request
-
-**Expected Results:**
-- ✓ All freelancer info visible
-- ✓ Portfolio links are clickable
-- ✓ Booking request sent successfully
-
-#### Managing Bookings
-1. Navigate to `/company/bookings`
-2. View different tabs:
-   - Pending
-   - Accepted
-   - Completed
-   - Rejected
-3. For accepted bookings, mark as paid:
-   - Enter amount
-   - Add notes (optional)
-   - Submit
-
-**Expected Results:**
-- ✓ Bookings categorized correctly
-- ✓ Payment recorded
-- ✓ Status updated to "completed"
-
-### 3. Freelancer Portal Testing
-
-#### Onboarding
-1. Use freelancer invite link to sign up
-2. Fill onboarding form:
-   - Full name (required)
-   - Location (required)
-   - WhatsApp number (required)
-   - Profile photo (optional)
-   - Equipment list (at least 1)
-   - Portfolio links (up to 3)
-   - ID proof (optional)
-3. Submit form
-
-**Expected Results:**
-- ✓ Profile created successfully
-- ✓ Redirected to job board
-- ✓ Onboarding status updated
-
-#### Browsing Jobs
-1. View job board at `/freelancer`
-2. Check job cards display:
-   - Title and company name
-   - Budget badge
-   - Location and job type
-   - Number of dates
-   - Time
-   - Posted date
-3. Click "View Details" on a job
-
-**Expected Results:**
-- ✓ All active jobs visible
-- ✓ Job information accurate
-- ✓ Can navigate to job details
-
-#### Job Details & Applying
-1. View job detail page
-2. Review all information:
-   - Full description
-   - All dates
-   - Contract terms
-   - Additional details
-3. Add optional message
-4. Click "I'm Interested" or "Not Interested"
-
-**Expected Results:**
-- ✓ All job details visible
-- ✓ Contract terms clearly displayed
-- ✓ Response submitted successfully
-- ✓ Cannot apply twice to same job
-
-#### Managing Bookings
-1. Navigate to `/freelancer/bookings`
-2. View pending booking requests
-3. Click "Accept Booking"
-4. Step 1: Review overview
-   - Check dates, location, budget
-   - View company contact
-   - Click "View Contract"
-5. Step 2: Review contract
-   - Read all contract terms
-   - Check additional details
-   - Click "I Accept"
-6. Step 3: Success screen
-   - Download calendar event
-   - Close dialog
-
-**Expected Results:**
-- ✓ Booking request details accurate
-- ✓ Contract terms clear
-- ✓ Can download .ics file
-- ✓ Booking status updated to "accepted"
-
-#### Declining Bookings
-1. Click "Decline" on a booking
-2. Confirm in warning dialog
-
-**Expected Results:**
-- ✓ Warning dialog appears
-- ✓ Booking marked as rejected
-- ✓ Company notified
-
-### 4. Authentication & Middleware Testing
-
-#### Route Protection
-1. Try accessing protected routes without login
-2. Try accessing admin routes as company
-3. Try accessing company routes as freelancer
-4. Try accessing routes without completed onboarding
-
-**Expected Results:**
-- ✓ Redirected to sign-in when not authenticated
-- ✓ Redirected to home when accessing unauthorized routes
-- ✓ Redirected to onboarding when incomplete
-
-#### Invite-Only System
-1. Try signing up without invite code
-2. Use expired invite
-3. Use already-used invite
-
-**Expected Results:**
-- ✓ Cannot sign up without valid invite
-- ✓ Expired invites show error
-- ✓ Used invites cannot be reused
-
-### 5. File Upload Testing
-
-#### Company Logo Upload
-1. During onboarding, upload logo
-2. Verify upload progress
-3. Check logo appears in profile
-
-**Expected Results:**
-- ✓ Upload succeeds
-- ✓ Logo visible on company profile
-- ✓ Image loads correctly
-
-#### Freelancer Photo & ID Upload
-1. Upload profile photo
-2. Upload ID proof
-3. Verify both uploads
-
-**Expected Results:**
-- ✓ Both files upload successfully
-- ✓ Images accessible via URL
-- ✓ No upload errors
-
-### 6. Form Validation Testing
-
-Test validation on all forms:
-
-#### Required Fields
-- Submit forms with empty required fields
-- Verify error messages appear
-
-#### Field Formats
-- Test invalid email formats
-- Test invalid phone numbers
-- Test short inputs (below minimum length)
-- Test long inputs (above maximum length)
-
-**Expected Results:**
-- ✓ Validation errors display
-- ✓ Form cannot submit with errors
-- ✓ Error messages are clear
-
-### 7. Responsive Design Testing
-
-Test on different screen sizes:
-
-#### Desktop (1920px)
-- Verify layouts don't break
-- Check sidebars appear correctly
-- Test all interactions
-
-#### Tablet (768px - 1280px)
-- Check responsive layouts
-- Verify touch interactions
-- Test navigation menus
-
-#### Mobile (320px - 768px)
-- Test mobile-optimized layouts
-- Verify all content is readable
-- Check touch targets are large enough
-
-**Expected Results:**
-- ✓ No horizontal scrolling
-- ✓ All text readable
-- ✓ Buttons easily tappable
-- ✓ Forms usable on all devices
-
-### 8. Error Handling Testing
-
-#### Network Errors
-1. Disconnect internet
-2. Try submitting forms
-3. Verify error messages
-
-#### Database Errors
-1. Use invalid DATABASE_URL
-2. Check error handling
-3. Verify user sees friendly message
-
-#### Authentication Errors
-1. Use invalid Clerk keys
-2. Try accessing protected routes
-3. Check error displays
-
-**Expected Results:**
-- ✓ Clear error messages
-- ✓ No app crashes
-- ✓ User can recover from errors
-
-## Performance Testing
-
-### Page Load Times
-- Homepage should load < 2s
-- Dashboard pages should load < 3s
-- Job listings should load < 2s
-
-### Database Queries
-- Check query performance in Drizzle Studio
-- Verify no N+1 query problems
-- Test with 100+ records
-
-### Image Loading
-- Test with large images
-- Verify lazy loading works
-- Check optimization
-
-## Automated Testing Checklist
-
-- [ ] All admin features work
-- [ ] Company can post jobs
-- [ ] Company can manage bookings
-- [ ] Freelancers can browse jobs
-- [ ] Freelancers can apply
-- [ ] Booking acceptance flow works
-- [ ] File uploads work
-- [ ] Authentication protects routes
-- [ ] Forms validate correctly
-- [ ] Responsive on all devices
-- [ ] Error handling works
-- [ ] Performance is acceptable
-
-## Bug Reporting
-
-When you find a bug, record:
-1. Steps to reproduce
-2. Expected behavior
-3. Actual behavior
-4. Screenshots if applicable
-5. Browser and device info
-6. Console errors
-
-## Post-Testing
-
-After testing:
-1. Document any issues found
-2. Fix critical bugs
-3. Re-test fixed issues
-4. Update documentation if needed
-5. Mark platform as ready for deployment
-
-
-
+# 🧪 Testing Guide - Responsive Design
+
+## **How to Test the Responsive Design**
+
+### **Method 1: Browser DevTools (Recommended)**
+
+1. **Open the site** in Chrome/Firefox/Safari
+2. **Open DevTools** (F12 or Right-click → Inspect)
+3. **Toggle Device Toolbar** (Ctrl+Shift+M or Cmd+Shift+M)
+4. **Test different devices:**
+
+#### **Mobile Devices:**
+- iPhone SE (375px)
+- iPhone 12 Pro (390px)
+- iPhone 14 Pro Max (430px)
+- Samsung Galaxy S20 (360px)
+
+#### **Tablets:**
+- iPad Mini (768px)
+- iPad Air (820px)
+- iPad Pro (1024px)
+
+#### **Desktop:**
+- Laptop (1280px)
+- Desktop (1920px)
+
+---
+
+### **Method 2: Resize Browser Window**
+
+1. Open the site in a browser
+2. Slowly resize the window from wide to narrow
+3. Watch for:
+   - Sidebar → Hamburger menu transition (at 1024px)
+   - 2-column → 1-column card layout
+   - Button width changes
+   - Text size adjustments
+
+---
+
+## **What to Test**
+
+### **✅ Navigation**
+
+#### **Mobile (< 1024px):**
+- [ ] Hamburger menu icon appears in top-right
+- [ ] Clicking hamburger opens slide-in menu
+- [ ] Menu slides in from right smoothly
+- [ ] Backdrop overlay appears
+- [ ] Clicking backdrop closes menu
+- [ ] Clicking nav item closes menu and navigates
+- [ ] UserButton appears in mobile header
+
+#### **Desktop (≥ 1024px):**
+- [ ] Fixed sidebar is visible
+- [ ] Hamburger menu is hidden
+- [ ] Sidebar shows all navigation items
+- [ ] Active page is highlighted
+- [ ] UserButton appears in desktop header
+
+---
+
+### **✅ Dashboard Layout**
+
+#### **Mobile:**
+- [ ] Page title and description stack vertically
+- [ ] Verification badge is on its own line
+- [ ] "Post New Job" button is full-width
+- [ ] Cards stack in single column
+- [ ] Card content is readable
+- [ ] No horizontal scrolling
+
+#### **Tablet:**
+- [ ] Header items start to align horizontally
+- [ ] Buttons are still prominent
+- [ ] Cards may show 2 columns
+- [ ] Spacing increases
+
+#### **Desktop:**
+- [ ] Header is fully horizontal
+- [ ] Buttons are auto-width
+- [ ] Multi-column card layout
+- [ ] Sidebar is fixed and visible
+- [ ] Ample spacing
+
+---
+
+### **✅ Job Cards**
+
+#### **Mobile:**
+- [ ] Title and badges stack vertically
+- [ ] Job details show one per line
+- [ ] Budget is prominent and green
+- [ ] Action buttons are full-width
+- [ ] Dates wrap nicely
+- [ ] Toggle switch is accessible
+
+#### **Desktop:**
+- [ ] Title and badges are side-by-side
+- [ ] Job details in 2-column grid
+- [ ] Compact layout
+- [ ] Hover states work
+- [ ] All actions visible
+
+---
+
+### **✅ Forms**
+
+#### **Mobile:**
+- [ ] Input fields are full-width
+- [ ] Labels are clear
+- [ ] Buttons are full-width
+- [ ] Error messages are visible
+- [ ] Keyboard doesn't obscure inputs
+
+#### **Desktop:**
+- [ ] Form has max-width for readability
+- [ ] Multi-column layouts where appropriate
+- [ ] Inline validation
+- [ ] Clear focus states
+
+---
+
+### **✅ Color Consistency**
+
+Check that colors are consistent across:
+- [ ] **Admin sections:** Purple accents
+- [ ] **Company sections:** Blue accents
+- [ ] **Freelancer sections:** Green accents
+- [ ] **Buttons:** Blue primary buttons
+- [ ] **Success states:** Green
+- [ ] **Warning states:** Yellow
+- [ ] **Error states:** Red
+
+---
+
+### **✅ Typography**
+
+- [ ] Headings are readable on all devices
+- [ ] Body text is at least 14px on mobile
+- [ ] Line height is comfortable
+- [ ] Text doesn't overflow containers
+- [ ] Proper hierarchy (h1 > h2 > p)
+
+---
+
+### **✅ Spacing**
+
+- [ ] Adequate padding around content
+- [ ] Consistent gaps between elements
+- [ ] Touch targets are at least 44x44px
+- [ ] No cramped layouts
+- [ ] Breathing room on all sides
+
+---
+
+## **Test Scenarios**
+
+### **Scenario 1: Admin Workflow**
+1. Sign in as admin
+2. Test navigation on mobile
+3. Create an invite
+4. View approvals page
+5. Check metrics page
+6. Test on tablet size
+7. Test on desktop
+
+### **Scenario 2: Company Workflow**
+1. Sign in as company
+2. Test mobile navigation
+3. View job listings
+4. Create a new job (form responsiveness)
+5. View responses
+6. Check bookings
+7. Resize browser and retest
+
+### **Scenario 3: Freelancer Workflow**
+1. Sign in as freelancer
+2. Test mobile menu
+3. Browse jobs
+4. View job details
+5. Apply for a job
+6. Check bookings
+7. Test across devices
+
+---
+
+## **Common Issues to Look For**
+
+### **🚫 Problems:**
+- Horizontal scrolling on mobile
+- Text too small to read
+- Buttons too small to tap
+- Overlapping elements
+- Hidden content
+- Broken layouts
+- Inconsistent colors
+- Missing navigation
+
+### **✅ Solutions:**
+- Use responsive classes (`sm:`, `md:`, `lg:`)
+- Set minimum font sizes
+- Use `min-h-[44px]` for tap targets
+- Test with DevTools
+- Use flexbox/grid properly
+- Follow design tokens
+- Test on real devices
+
+---
+
+## **Performance Testing**
+
+### **Lighthouse Scores to Aim For:**
+- **Performance:** > 90
+- **Accessibility:** > 90
+- **Best Practices:** > 90
+- **SEO:** > 90
+
+### **How to Test:**
+1. Open DevTools
+2. Go to "Lighthouse" tab
+3. Select "Mobile" or "Desktop"
+4. Click "Analyze page load"
+5. Review scores and suggestions
+
+---
+
+## **Accessibility Testing**
+
+### **Keyboard Navigation:**
+- [ ] Tab through all interactive elements
+- [ ] Enter/Space activates buttons
+- [ ] Escape closes modals/menus
+- [ ] Focus indicators are visible
+
+### **Screen Reader:**
+- [ ] Test with VoiceOver (Mac) or NVDA (Windows)
+- [ ] All images have alt text
+- [ ] Form labels are associated
+- [ ] Headings are in order
+
+---
+
+## **Real Device Testing**
+
+### **If Possible, Test On:**
+1. **iPhone** (Safari)
+2. **Android Phone** (Chrome)
+3. **iPad** (Safari)
+4. **Android Tablet** (Chrome)
+5. **Desktop** (Chrome, Firefox, Safari)
+
+### **What to Check:**
+- Touch interactions feel natural
+- Scrolling is smooth
+- Animations don't lag
+- Text is readable
+- Colors look good
+- Layout doesn't break
+
+---
+
+## **Quick Test Commands**
+
+```bash
+# Build for production
+yarn build
+
+# Start dev server
+yarn dev
+
+# Check for TypeScript errors
+yarn tsc --noEmit
+
+# Run linter
+yarn lint
+```
+
+---
+
+## **Reporting Issues**
+
+If you find any responsive design issues:
+
+1. **Screenshot** the problem
+2. **Note the device/browser** (e.g., iPhone 12, Safari)
+3. **Note the viewport size** (e.g., 375px wide)
+4. **Describe the issue** (e.g., "Button is cut off")
+5. **Expected behavior** (e.g., "Button should be full-width")
+
+---
+
+**Happy Testing!** 🎉
+
+The platform should now work beautifully on all devices! 📱💻🖥️

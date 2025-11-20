@@ -1,6 +1,7 @@
 import { requireRole } from '@/lib/auth'
 import { UserButton } from '@clerk/nextjs'
 import { NavLink } from '@/components/nav-link'
+import { MobileNav } from '@/components/mobile-nav'
 import { 
   LayoutDashboard, 
   Users, 
@@ -16,47 +17,44 @@ export default async function AdminLayout({
 }) {
   await requireRole('admin')
 
+  const navItems = [
+    { href: '/admin', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard' },
+    { href: '/admin/approvals', icon: <CheckCircle className="w-5 h-5" />, label: 'Approvals' },
+    { href: '/admin/invites', icon: <Mail className="w-5 h-5" />, label: 'Invites' },
+    { href: '/admin/users', icon: <Users className="w-5 h-5" />, label: 'Users' },
+    { href: '/admin/metrics', icon: <BarChart3 className="w-5 h-5" />, label: 'Metrics' },
+  ]
+
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200">
+      {/* Mobile Navigation */}
+      <MobileNav title="Admin Panel" navItems={navItems} />
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex lg:flex-col w-64 bg-white border-r border-gray-200">
         <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200">
-          <h1 className="text-xl font-bold">Admin Panel</h1>
+          <h1 className="text-xl font-bold text-purple-600">Admin Panel</h1>
         </div>
-        <nav className="p-4 space-y-2">
-          <NavLink href="/admin">
-            <LayoutDashboard className="w-5 h-5" />
-            <span>Dashboard</span>
-          </NavLink>
-          <NavLink href="/admin/approvals">
-            <CheckCircle className="w-5 h-5" />
-            <span>Approvals</span>
-          </NavLink>
-          <NavLink href="/admin/invites">
-            <Mail className="w-5 h-5" />
-            <span>Invites</span>
-          </NavLink>
-          <NavLink href="/admin/users">
-            <Users className="w-5 h-5" />
-            <span>Users</span>
-          </NavLink>
-          <NavLink href="/admin/metrics">
-            <BarChart3 className="w-5 h-5" />
-            <span>Metrics</span>
-          </NavLink>
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          {navItems.map((item) => (
+            <NavLink key={item.href} href={item.href}>
+              {item.icon}
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
         </nav>
       </aside>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="flex h-16 items-center justify-between px-6 bg-white border-b border-gray-200">
-          <h2 className="text-lg font-semibold">Freelancer Platform</h2>
+        {/* Desktop Header */}
+        <header className="hidden lg:flex h-16 items-center justify-between px-6 bg-white border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-700">Freelancer Platform</h2>
           <UserButton afterSignOutUrl="/sign-in" />
         </header>
 
-        {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        {/* Content - Add top padding on mobile to account for fixed header */}
+        <main className="flex-1 overflow-y-auto p-4 pt-20 sm:p-6 lg:p-8 lg:pt-8">
           {children}
         </main>
       </div>

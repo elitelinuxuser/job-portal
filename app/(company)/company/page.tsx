@@ -24,21 +24,21 @@ export default async function CompanyDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <div>
-            <h1 className="text-3xl font-bold">My Jobs</h1>
-            <p className="text-gray-600 mt-1">Manage your job postings</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Jobs</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">Manage your job postings</p>
           </div>
           <Badge
             variant={profile.verificationStatus === 'verified' ? 'default' : 'secondary'}
-            className={profile.verificationStatus === 'verified' ? 'bg-green-600' : 'bg-yellow-100 text-yellow-800'}
+            className={`${profile.verificationStatus === 'verified' ? 'bg-green-600' : 'bg-yellow-100 text-yellow-800'} w-fit`}
           >
             {profile.verificationStatus === 'verified' ? '✓ Verified' : '⏳ Pending Approval'}
           </Badge>
         </div>
-        <Link href="/company/post-job">
-          <Button>
+        <Link href="/company/post-job" className="w-full sm:w-auto">
+          <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" />
             Post New Job
           </Button>
@@ -47,10 +47,10 @@ export default async function CompanyDashboard() {
 
       {jobs.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-gray-500 mb-4">No jobs posted yet</p>
-            <Link href="/company/post-job">
-              <Button>
+          <CardContent className="flex flex-col items-center justify-center py-12 px-4">
+            <p className="text-gray-500 mb-4 text-center">No jobs posted yet</p>
+            <Link href="/company/post-job" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
                 <Plus className="w-4 h-4 mr-2" />
                 Post Your First Job
               </Button>
@@ -58,17 +58,17 @@ export default async function CompanyDashboard() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 sm:gap-6">
           {jobs.map((job) => (
             <Card key={job.id}>
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle>{job.title}</CardTitle>
-                    <CardDescription className="mt-2">{job.description}</CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-lg sm:text-xl">{job.title}</CardTitle>
+                    <CardDescription className="mt-2 line-clamp-2">{job.description}</CardDescription>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={job.isActive ? 'default' : 'secondary'}>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Badge variant={job.isActive ? 'default' : 'secondary'} className="bg-blue-600">
                       {job.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                     <ToggleJobStatus jobId={job.id} isActive={job.isActive} />
@@ -76,23 +76,23 @@ export default async function CompanyDashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-3 text-sm">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-gray-600">Location:</span>
-                      <span className="ml-2 font-medium">{job.location}</span>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center">
+                      <span className="text-gray-600 text-xs sm:text-sm">Location:</span>
+                      <span className="ml-0 sm:ml-2 font-medium">{job.location}</span>
                     </div>
-                    <div>
-                      <span className="text-gray-600">Budget:</span>
-                      <span className="ml-2 font-medium">₹{job.budget}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center">
+                      <span className="text-gray-600 text-xs sm:text-sm">Budget:</span>
+                      <span className="ml-0 sm:ml-2 font-medium text-green-600">₹{job.budget}</span>
                     </div>
-                    <div>
-                      <span className="text-gray-600">Job Type:</span>
-                      <span className="ml-2 font-medium">{job.jobType}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center">
+                      <span className="text-gray-600 text-xs sm:text-sm">Job Type:</span>
+                      <span className="ml-0 sm:ml-2 font-medium">{job.jobType}</span>
                     </div>
-                    <div>
-                      <span className="text-gray-600">Time:</span>
-                      <span className="ml-2 font-medium">{job.time}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center">
+                      <span className="text-gray-600 text-xs sm:text-sm">Time:</span>
+                      <span className="ml-0 sm:ml-2 font-medium">{job.time}</span>
                     </div>
                   </div>
                   <div>
