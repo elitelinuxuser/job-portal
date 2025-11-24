@@ -63,6 +63,32 @@ export async function GET(req: NextRequest) {
       },
     })
 
+    // Ensure user exists in local database (webhook might not have fired yet)
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    })
+
+    if (!existingUser) {
+      // Get user email from Clerk
+      const clerkUser = await client.users.getUser(userId)
+      const email = clerkUser.emailAddresses[0]?.emailAddress
+
+      if (!email) {
+        return NextResponse.json(
+          { error: 'User email not found' },
+          { status: 400 }
+        )
+      }
+
+      // Create user in local database
+      await db.insert(users).values({
+        id: userId,
+        email,
+        role: invite.role,
+        onboardingStatus: 'incomplete',
+      })
+    }
+
     // Mark invite as accepted
     await db
       .update(invites)
