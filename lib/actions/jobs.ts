@@ -1,52 +1,61 @@
-'use server'
+"use server";
 
-import { db } from '@/lib/db'
-import { jobPosts, jobResponses, bookingRequests, payments } from '@/lib/db/schema'
-import { requireRole } from '@/lib/auth'
-import { auth } from '@clerk/nextjs/server'
-import { eq, and, or } from 'drizzle-orm'
-import { revalidatePath } from 'next/cache'
+import { db } from "@/lib/db";
+import {
+  jobPosts,
+  jobResponses,
+  bookingRequests,
+  payments,
+} from "@/lib/db/schema";
+import { requireRole } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
+import { eq, and, or } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 
 export async function createJobPost(data: {
-  title: string
-  description: string
-  dates: string[]
-  location: string
-  budget: string
-  jobType: string
-  time: string
-  contractContentPosting: boolean
-  contractAdvancePayment: boolean
-  contractPaymentAfterShot: boolean
-  contractContentOwnership: boolean
-  contractSdCard: boolean
-  contractAdditionalDetails?: string
+  title: string;
+  description: string;
+  dates: string[];
+  location: string;
+  budget?: string;
+  jobType: string;
+  time?: string;
+  contractContentPosting: boolean;
+  contractAdvancePayment: boolean;
+  contractPaymentAfterShot: boolean;
+  contractContentOwnership: boolean;
+  contractSdCard: boolean;
+  contractAdditionalDetails?: string;
 }) {
-  await requireRole('company')
-  
-  const { userId } = await auth()
-  
+  await requireRole("company");
+
+  const { userId } = await auth();
+
   if (!userId) {
-    throw new Error('Unauthorized')
+    throw new Error("Unauthorized");
   }
 
-  const [job] = await db.insert(jobPosts).values({
-    companyId: userId,
-    ...data,
-  }).returning()
+  const [job] = await db
+    .insert(jobPosts)
+    .values({
+      companyId: userId,
+      ...data,
+    })
+    .returning();
 
-  revalidatePath('/company')
-  
-  return { success: true, job }
+  revalidatePath("/company");
+  revalidatePath("/freelancer");
+
+  return { success: true, job };
 }
 
 export async function getCompanyJobs() {
-  await requireRole('company')
-  
-  const { userId } = await auth()
-  
+  await requireRole("company");
+
+  const { userId } = await auth();
+
   if (!userId) {
-    return []
+    return [];
   }
 
   const jobs = await db.query.jobPosts.findMany({
@@ -63,27 +72,27 @@ export async function getCompanyJobs() {
         },
       },
     },
-  })
+  });
 
-  return jobs
+  return jobs;
 }
 
 export async function getJobResponses(jobId: string) {
-  await requireRole('company')
-  
-  const { userId } = await auth()
-  
+  await requireRole("company");
+
+  const { userId } = await auth();
+
   if (!userId) {
-    return []
+    return [];
   }
 
   // Verify job belongs to company
   const job = await db.query.jobPosts.findFirst({
     where: and(eq(jobPosts.id, jobId), eq(jobPosts.companyId, userId)),
-  })
+  });
 
   if (!job) {
-    throw new Error('Job not found')
+    throw new Error("Job not found");
   }
 
   const responses = await db.query.jobResponses.findMany({
@@ -96,30 +105,30 @@ export async function getJobResponses(jobId: string) {
       },
     },
     orderBy: (jobResponses, { desc }) => [desc(jobResponses.createdAt)],
-  })
+  });
 
-  return responses
+  return responses;
 }
 
 export async function createBookingRequest(data: {
-  jobId: string
-  freelancerId: string
+  jobId: string;
+  freelancerId: string;
 }) {
-  await requireRole('company')
-  
-  const { userId } = await auth()
-  
+  await requireRole("company");
+
+  const { userId } = await auth();
+
   if (!userId) {
-    throw new Error('Unauthorized')
+    throw new Error("Unauthorized");
   }
 
   // Get job details for contract
   const job = await db.query.jobPosts.findFirst({
     where: and(eq(jobPosts.id, data.jobId), eq(jobPosts.companyId, userId)),
-  })
+  });
 
   if (!job) {
-    throw new Error('Job not found')
+    throw new Error("Job not found");
   }
 
   // Create contract details object
@@ -137,28 +146,44 @@ export async function createBookingRequest(data: {
     contractContentOwnership: job.contractContentOwnership,
     contractSdCard: job.contractSdCard,
     contractAdditionalDetails: job.contractAdditionalDetails,
-  }
+  };
 
-  const [booking] = await db.insert(bookingRequests).values({
-    jobId: data.jobId,
-    companyId: userId,
-    freelancerId: data.freelancerId,
-    contractDetails,
-  }).returning()
+  const [booking] = await db
+    .insert(bookingRequests)
+    .values({
+      jobId: data.jobId,
+      companyId: userId,
+      freelancerId: data.freelancerId,
+      contractDetails,
+    })
+    .returning();
 
-  revalidatePath('/company/bookings')
-  revalidatePath('/company/responses')
-  
-  return { success: true, booking }
+  // Auto-deactivate job and mark as booked
+  await db
+    .update(jobPosts)
+    .set({
+      status: "booked",
+      bookedFreelancerId: data.freelancerId,
+      isActive: false,
+      updatedAt: new Date(),
+    })
+    .where(eq(jobPosts.id, data.jobId));
+
+  revalidatePath("/company/bookings");
+  revalidatePath("/company/responses");
+  revalidatePath("/company");
+  revalidatePath("/freelancer");
+
+  return { success: true, booking };
 }
 
 export async function getCompanyBookings() {
-  await requireRole('company')
-  
-  const { userId } = await auth()
-  
+  await requireRole("company");
+
+  const { userId } = await auth();
+
   if (!userId) {
-    return []
+    return [];
   }
 
   const bookings = await db.query.bookingRequests.findMany({
@@ -173,22 +198,22 @@ export async function getCompanyBookings() {
       },
       payments: true,
     },
-  })
+  });
 
-  return bookings
+  return bookings;
 }
 
 export async function markBookingAsPaid(data: {
-  bookingId: string
-  amount: string
-  notes?: string
+  bookingId: string;
+  amount: string;
+  notes?: string;
 }) {
-  await requireRole('company')
-  
-  const { userId } = await auth()
-  
+  await requireRole("company");
+
+  const { userId } = await auth();
+
   if (!userId) {
-    throw new Error('Unauthorized')
+    throw new Error("Unauthorized");
   }
 
   // Verify booking belongs to company
@@ -197,10 +222,10 @@ export async function markBookingAsPaid(data: {
       eq(bookingRequests.id, data.bookingId),
       eq(bookingRequests.companyId, userId)
     ),
-  })
+  });
 
   if (!booking) {
-    throw new Error('Booking not found')
+    throw new Error("Booking not found");
   }
 
   // Create payment record
@@ -210,51 +235,141 @@ export async function markBookingAsPaid(data: {
     paidAt: new Date(),
     markedBy: userId,
     notes: data.notes,
-  })
+  });
 
   // Update booking status
   await db
     .update(bookingRequests)
     .set({
-      status: 'completed',
+      status: "completed",
       updatedAt: new Date(),
     })
-    .where(eq(bookingRequests.id, data.bookingId))
+    .where(eq(bookingRequests.id, data.bookingId));
 
-  revalidatePath('/company/bookings')
-  
-  return { success: true }
+  revalidatePath("/company/bookings");
+
+  return { success: true };
 }
 
 export async function toggleJobStatus(jobId: string) {
-  await requireRole('company')
-  
-  const { userId } = await auth()
-  
+  await requireRole("company");
+
+  const { userId } = await auth();
+
   if (!userId) {
-    throw new Error('Unauthorized')
+    throw new Error("Unauthorized");
   }
 
   const job = await db.query.jobPosts.findFirst({
     where: and(eq(jobPosts.id, jobId), eq(jobPosts.companyId, userId)),
-  })
+  });
 
   if (!job) {
-    throw new Error('Job not found')
+    throw new Error("Job not found");
   }
 
   await db
     .update(jobPosts)
     .set({
       isActive: !job.isActive,
+      status: !job.isActive ? "active" : job.status,
       updatedAt: new Date(),
     })
-    .where(eq(jobPosts.id, jobId))
+    .where(eq(jobPosts.id, jobId));
 
-  revalidatePath('/company')
-  
-  return { success: true }
+  revalidatePath("/company");
+
+  return { success: true };
 }
 
+// Cancel booking (Company or Freelancer can cancel)
+export async function cancelBooking(bookingId: string) {
+  const { userId } = await auth();
 
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
 
+  // Find the booking
+  const booking = await db.query.bookingRequests.findFirst({
+    where: eq(bookingRequests.id, bookingId),
+  });
+
+  if (!booking) {
+    throw new Error("Booking not found");
+  }
+
+  // Check if user is authorized (company or freelancer)
+  if (booking.companyId !== userId && booking.freelancerId !== userId) {
+    throw new Error("Unauthorized to cancel this booking");
+  }
+
+  // Update booking status to rejected/cancelled
+  await db
+    .update(bookingRequests)
+    .set({
+      status: "rejected",
+      updatedAt: new Date(),
+    })
+    .where(eq(bookingRequests.id, bookingId));
+
+  // Reactivate the job if cancelled
+  await db
+    .update(jobPosts)
+    .set({
+      status: "active",
+      bookedFreelancerId: null,
+      isActive: true,
+      updatedAt: new Date(),
+    })
+    .where(eq(jobPosts.id, booking.jobId));
+
+  revalidatePath("/company/bookings");
+  revalidatePath("/freelancer/bookings");
+  revalidatePath("/company");
+  revalidatePath("/freelancer");
+
+  return { success: true };
+}
+
+// Mark job as completed
+export async function completeJob(jobId: string) {
+  await requireRole("company");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  const job = await db.query.jobPosts.findFirst({
+    where: and(eq(jobPosts.id, jobId), eq(jobPosts.companyId, userId)),
+  });
+
+  if (!job) {
+    throw new Error("Job not found");
+  }
+
+  await db
+    .update(jobPosts)
+    .set({
+      status: "completed",
+      isActive: false,
+      updatedAt: new Date(),
+    })
+    .where(eq(jobPosts.id, jobId));
+
+  // Update booking to completed
+  await db
+    .update(bookingRequests)
+    .set({
+      status: "completed",
+      updatedAt: new Date(),
+    })
+    .where(eq(bookingRequests.jobId, jobId));
+
+  revalidatePath("/company");
+  revalidatePath("/freelancer");
+
+  return { success: true };
+}

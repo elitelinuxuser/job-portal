@@ -1,7 +1,10 @@
 import { getCompanyJobs } from '@/lib/actions/jobs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { SendBookingRequest } from '@/components/company/send-booking-request'
+import { IndianRupee, User, ArrowUpDown } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function ResponsesPage() {
   const jobs = await getCompanyJobs()
@@ -17,10 +20,10 @@ export default async function ResponsesPage() {
   const interestedResponses = allResponses.filter((r: any) => r.status === 'interested')
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Job Responses</h1>
-        <p className="text-gray-600 mt-1">Review freelancer applications</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Job Responses</h1>
+        <p className="text-gray-600 mt-2">Review and manage freelancer applications</p>
       </div>
 
       {interestedResponses.length === 0 ? (
@@ -116,6 +119,29 @@ export default async function ResponsesPage() {
                         </>
                       )}
 
+                      {/* Proposed Price */}
+                      {response.proposedPrice && (
+                        <div className="pt-3 border-t">
+                          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                              <IndianRupee className="w-5 h-5 text-green-600" />
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-sm text-gray-600">Proposed Price:</span>
+                              <div className="flex items-center gap-2">
+                                <p className="text-2xl font-bold text-green-600">₹{response.proposedPrice}</p>
+                                {response.job.budget && response.proposedPrice !== response.job.budget && (
+                                  <div className="flex items-center gap-1 text-sm text-gray-500">
+                                    <ArrowUpDown className="w-4 h-4" />
+                                    <span>Original: ₹{response.job.budget}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {response.message && (
                         <div className="pt-3 border-t">
                           <span className="text-sm text-gray-600">Message:</span>
@@ -125,7 +151,13 @@ export default async function ResponsesPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-3">
+                    <Link href={`/freelancer/profile/${response.freelancerId}`}>
+                      <Button variant="outline" className="gap-2">
+                        <User className="w-4 h-4" />
+                        View Full Profile
+                      </Button>
+                    </Link>
                     <SendBookingRequest
                       jobId={response.job.id}
                       freelancerId={response.freelancerId}

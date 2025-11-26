@@ -28,6 +28,25 @@ export default async function ApprovalsPage() {
     .innerJoin(users, eq(users.id, freelancerProfiles.userId))
     .where(eq(freelancerProfiles.verificationStatus, 'pending'))
 
+  // Get verified profiles
+  const verifiedCompanies = await db
+    .select({
+      profile: companyProfiles,
+      user: users,
+    })
+    .from(companyProfiles)
+    .innerJoin(users, eq(users.id, companyProfiles.userId))
+    .where(eq(companyProfiles.verificationStatus, 'verified'))
+
+  const verifiedFreelancers = await db
+    .select({
+      profile: freelancerProfiles,
+      user: users,
+    })
+    .from(freelancerProfiles)
+    .innerJoin(users, eq(users.id, freelancerProfiles.userId))
+    .where(eq(freelancerProfiles.verificationStatus, 'verified'))
+
   return (
     <div className="space-y-6">
       <div>
@@ -127,16 +146,35 @@ export default async function ApprovalsPage() {
                     )}
                   </div>
 
-                  {profile.logoUrl && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-2">Company Logo:</p>
-                      <img
-                        src={profile.logoUrl}
-                        alt="Company logo"
-                        className="h-20 w-20 object-contain border rounded"
-                      />
-                    </div>
-                  )}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {profile.logoUrl && (
+                      <div>
+                        <p className="text-sm text-gray-600 mb-2">Company Logo:</p>
+                        <img
+                          src={profile.logoUrl}
+                          alt="Company logo"
+                          className="h-20 w-20 object-contain border rounded"
+                        />
+                      </div>
+                    )}
+
+                    {profile.proofOfOwnershipUrl && (
+                      <div>
+                        <p className="text-sm text-gray-600 mb-2">Proof of Ownership:</p>
+                        <a
+                          href={profile.proofOfOwnershipUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-blue-600 hover:underline text-sm font-medium"
+                        >
+                          View Document
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      </div>
+                    )}
+                  </div>
 
                   <ApprovalActions
                     profileId={profile.id}
