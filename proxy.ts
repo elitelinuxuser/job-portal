@@ -25,6 +25,10 @@ const isOnboardingRoute = createRouteMatcher([
   "/company/onboarding",
   "/freelancer/onboarding",
 ]);
+const isFreelancerJobBrowsingRoute = createRouteMatcher([
+  "/freelancer",
+  "/freelancer/jobs(.*)",
+]);
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
@@ -119,15 +123,20 @@ export default clerkMiddleware(async (auth, req) => {
         verificationStatus = profile?.verificationStatus;
       }
 
-      // Redirect rejected users to rejected page
+      // Redirect rejected users to rejected page (no exceptions - they cannot access any routes)
       if (verificationStatus === "rejected" && !isRejectedRoute(req)) {
         const rejectedUrl =
           role === "company" ? "/company/rejected" : "/freelancer/rejected";
         return NextResponse.redirect(new URL(rejectedUrl, req.url));
       }
 
-      // Redirect pending users to pending page
+      // Redirect pending users to pending page (except freelancers on job browsing routes)
       if (verificationStatus === "pending" && !isPendingRoute(req)) {
+        // Allow pending freelancers to browse jobs and view job details
+        if (role === "freelancer" && isFreelancerJobBrowsingRoute(req)) {
+          return NextResponse.next();
+        }
+
         const pendingUrl =
           role === "company" ? "/company/pending" : "/freelancer/pending";
         return NextResponse.redirect(new URL(pendingUrl, req.url));

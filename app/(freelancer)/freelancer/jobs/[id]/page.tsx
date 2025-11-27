@@ -7,7 +7,6 @@ import { notFound } from 'next/navigation'
 import { 
   MapPin, 
   Briefcase, 
-  Clock, 
   Building2,
   CheckCircle2,
   ArrowLeft,
@@ -20,6 +19,7 @@ import {
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
+import { getJobTypeLabel } from '@/lib/constants/job-types'
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -56,13 +56,15 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 pt-2">
-                <Badge variant="secondary" className="px-3 py-1">
-                  <Briefcase className="w-3 h-3 mr-1" />
-                  {job.jobType}
-                </Badge>
+                {job.jobTypes.map((jobType) => (
+                  <Badge key={jobType} variant="secondary" className="px-3 py-1">
+                    <Briefcase className="w-3 h-3 mr-1" />
+                    {getJobTypeLabel(jobType as any)}
+                  </Badge>
+                ))}
                 <Badge variant="outline" className="px-3 py-1">
                   <Calendar className="w-3 h-3 mr-1" />
-                  {(job.dates as string[]).length} day(s)
+                  {job.dates.length} day(s)
                 </Badge>
                 {!hasResponded && (
                   <Badge className="bg-green-100 text-green-800 hover:bg-green-200 px-3 py-1">
@@ -86,7 +88,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               {/* Job Details Grid - Mobile Responsive */}
               <div>
                 <h2 className="font-semibold text-lg mb-3 text-gray-900">Key Details</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
                     <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
                       <MapPin className="w-5 h-5 text-white" />
@@ -96,18 +98,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                       <p className="font-semibold text-gray-900 truncate">{job.location}</p>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
-                    <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center shrink-0">
-                      <Clock className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-purple-700 font-medium">Time</p>
-                      <p className="font-semibold text-gray-900 truncate">{job.time}</p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200 sm:col-span-2 lg:col-span-1">
+                  <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
                     <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center shrink-0">
                       <IndianRupee className="w-5 h-5 text-white" />
                     </div>
@@ -126,13 +118,13 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                   Available Dates
                 </h2>
                 <div className="flex flex-wrap gap-2">
-                  {(job.dates as string[]).map((date, idx) => (
+                  {job.dates.map((dateObj, idx) => (
                     <Badge 
                       key={idx} 
                       variant="outline" 
                       className="px-3 py-2 text-sm font-medium"
                     >
-                      {format(new Date(date), 'MMM d, yyyy')}
+                      {format(new Date(dateObj.date), 'MMM d, yyyy')}
                     </Badge>
                   ))}
                 </div>

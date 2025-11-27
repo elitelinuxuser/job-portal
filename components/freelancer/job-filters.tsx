@@ -12,7 +12,9 @@ import {
   X,
   MapPin,
   Briefcase,
-  IndianRupee
+  IndianRupee,
+  ChevronDown,
+  Check
 } from 'lucide-react'
 import {
   Sheet,
@@ -21,10 +23,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from '@/lib/utils'
+import { JOB_TYPE_OPTIONS, getJobTypeLabel } from '@/lib/constants/job-types'
+import { LocationAutocomplete, LocationData } from '@/components/shared/location-autocomplete'
 
 export interface FilterState {
   search: string
-  locations: string[]
+  locationSearch: string
   jobTypes: string[]
   minBudget: string
   maxBudget: string
@@ -40,16 +50,15 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [filters, setFilters] = useState<FilterState>({
     search: '',
-    locations: [],
+    locationSearch: '',
     jobTypes: [],
     minBudget: '',
     maxBudget: '',
     sortBy: 'recent'
   })
 
-  // Extract unique values
-  const allLocations = Array.from(new Set(jobs.map(job => job.location)))
-  const allJobTypes = Array.from(new Set(jobs.map(job => job.jobType)))
+  // Use predefined job types for filter options
+  const allJobTypes = JOB_TYPE_OPTIONS
 
   // Apply filters
   useEffect(() => {
@@ -65,14 +74,20 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
       )
     }
 
-    // Location filter
-    if (filters.locations.length > 0) {
-      filtered = filtered.filter(job => filters.locations.includes(job.location))
+    // Location filter (search by city/location text)
+    if (filters.locationSearch) {
+      const locationLower = filters.locationSearch.toLowerCase()
+      filtered = filtered.filter(job => 
+        job.location.toLowerCase().includes(locationLower) ||
+        job.locationCity?.toLowerCase().includes(locationLower)
+      )
     }
 
-    // Job type filter
+    // Job type filter - check if any of the job's types match any selected filter
     if (filters.jobTypes.length > 0) {
-      filtered = filtered.filter(job => filters.jobTypes.includes(job.jobType))
+      filtered = filtered.filter(job => 
+        job.jobTypes.some(jobType => filters.jobTypes.includes(jobType))
+      )
     }
 
     // Budget filter
@@ -102,16 +117,18 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
     }
 
     onFilterChange(filters, filtered)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, jobs])
 
-  const handleLocationToggle = (location: string) => {
-    setFilters(prev => ({
-      ...prev,
-      locations: prev.locations.includes(location)
-        ? prev.locations.filter(l => l !== location)
-        : [...prev.locations, location]
-    }))
-  }
+  // No longer needed - using text search instead
+  // const handleLocationToggle = (location: string) => {
+  //   setFilters(prev => ({
+  //     ...prev,
+  //     locations: prev.locations.includes(location)
+  //       ? prev.locations.filter(l => l !== location)
+  //       : [...prev.locations, location]
+  //   }))
+  // }
 
   const handleJobTypeToggle = (jobType: string) => {
     setFilters(prev => ({
@@ -125,7 +142,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
   const clearAllFilters = () => {
     setFilters({
       search: '',
-      locations: [],
+      locationSearch: '',
       jobTypes: [],
       minBudget: '',
       maxBudget: '',
@@ -134,13 +151,13 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
   }
 
   const activeFilterCount = 
-    (filters.locations.length > 0 ? 1 : 0) +
+    (filters.locationSearch ? 1 : 0) +
     (filters.jobTypes.length > 0 ? 1 : 0) +
     (filters.minBudget || filters.maxBudget ? 1 : 0)
 
   const removeFilterChip = (type: 'location' | 'jobType' | 'budget', value?: string) => {
-    if (type === 'location' && value) {
-      handleLocationToggle(value)
+    if (type === 'location') {
+      setFilters(prev => ({ ...prev, locationSearch: '' }))
     } else if (type === 'jobType' && value) {
       handleJobTypeToggle(value)
     } else if (type === 'budget') {
@@ -215,29 +232,28 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
 
             {/* Filter Content */}
             <div className="px-6 pt-6 pb-safe bg-white overflow-y-auto max-h-[70vh] space-y-6">
-              {/* Location Filter */}
+              {/* Location Search */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <MapPin className="w-4 h-4 text-gray-600" />
                   <Label className="text-base font-semibold">Location</Label>
                 </div>
-                <div className="space-y-2">
-                  {allLocations.map(location => (
-                    <div key={location} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`location-${location}`}
-                        checked={filters.locations.includes(location)}
-                        onCheckedChange={() => handleLocationToggle(location)}
-                      />
-                      <label
-                        htmlFor={`location-${location}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {location}
-                      </label>
-                    </div>
-                  ))}
-                </div>
+                <LocationAutocomplete
+                  value={filters.locationSearch}
+                  onChange={(locationData: LocationData) => {
+                    // Store the city name for filtering
+                    setFilters(prev => ({ 
+                      ...prev, 
+                      locationSearch: locationData.city || locationData.formatted 
+                    }))
+                  }}
+                  placeholder="Search by city..."
+                  restrictToCities={true}
+                  className=""
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Select a city from the suggestions to filter jobs
+                </p>
               </div>
 
               {/* Job Type Filter */}
@@ -246,23 +262,55 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
                   <Briefcase className="w-4 h-4 text-gray-600" />
                   <Label className="text-base font-semibold">Job Type</Label>
                 </div>
-                <div className="space-y-2">
-                  {allJobTypes.map(jobType => (
-                    <div key={jobType} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`jobType-${jobType}`}
-                        checked={filters.jobTypes.includes(jobType)}
-                        onCheckedChange={() => handleJobTypeToggle(jobType)}
-                      />
-                      <label
-                        htmlFor={`jobType-${jobType}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {jobType}
-                      </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between h-auto min-h-[40px] px-3 py-2 text-left font-normal"
+                    >
+                      <span className="truncate">
+                        {filters.jobTypes.length === 0 ? (
+                          <span className="text-gray-500">Select job types...</span>
+                        ) : filters.jobTypes.length === 1 ? (
+                          getJobTypeLabel(filters.jobTypes[0] as any)
+                        ) : (
+                          `${filters.jobTypes.length} types selected`
+                        )}
+                      </span>
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full min-w-[280px] p-0" align="start" style={{ width: 'var(--radix-popover-trigger-width)' }}>
+                    <div className="max-h-[300px] overflow-y-auto">
+                      {allJobTypes.map((jobType) => (
+                        <div
+                          key={jobType.value}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-gray-100 transition-colors",
+                            filters.jobTypes.includes(jobType.value) && "bg-blue-50"
+                          )}
+                          onClick={() => handleJobTypeToggle(jobType.value)}
+                        >
+                          <Checkbox
+                            checked={filters.jobTypes.includes(jobType.value)}
+                            onCheckedChange={() => handleJobTypeToggle(jobType.value)}
+                            className="pointer-events-none"
+                          />
+                          <span className="text-sm flex-1">{jobType.label}</span>
+                          {filters.jobTypes.includes(jobType.value) && (
+                            <Check className="h-4 w-4 text-blue-600" />
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </PopoverContent>
+                </Popover>
+                {filters.jobTypes.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    {filters.jobTypes.length} type{filters.jobTypes.length !== 1 ? 's' : ''} selected
+                  </p>
+                )}
               </div>
 
               {/* Budget Range */}
@@ -319,22 +367,21 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
       </div>
 
       {/* Active Filter Chips */}
-      {(filters.locations.length > 0 || filters.jobTypes.length > 0 || filters.minBudget || filters.maxBudget) && (
+      {(filters.locationSearch || filters.jobTypes.length > 0 || filters.minBudget || filters.maxBudget) && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-gray-600">Active filters:</span>
           
-          {filters.locations.map(location => (
+          {filters.locationSearch && (
             <Badge 
-              key={location} 
               variant="secondary" 
               className="gap-1 pr-1 pl-3 py-1.5 cursor-pointer hover:bg-gray-200"
-              onClick={() => removeFilterChip('location', location)}
+              onClick={() => removeFilterChip('location')}
             >
               <MapPin className="w-3 h-3" />
-              {location}
+              {filters.locationSearch}
               <X className="w-3 h-3 ml-1" />
             </Badge>
-          ))}
+          )}
           
           {filters.jobTypes.map(jobType => (
             <Badge 
@@ -344,7 +391,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
               onClick={() => removeFilterChip('jobType', jobType)}
             >
               <Briefcase className="w-3 h-3" />
-              {jobType}
+              {getJobTypeLabel(jobType as any)}
               <X className="w-3 h-3 ml-1" />
             </Badge>
           ))}

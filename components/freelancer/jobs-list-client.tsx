@@ -6,16 +6,16 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { 
+  Heart, 
   MapPin, 
   Briefcase,
   Calendar, 
-  Clock, 
   Building2,
-  ArrowRight,
-  Heart
+  ArrowRight
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { JobFilters, FilterState } from './job-filters'
+import { getJobTypeLabel } from '@/lib/constants/job-types'
 import {
   Select,
   SelectContent,
@@ -29,10 +29,10 @@ interface Job {
   title: string
   description: string
   budget: string | null
-  jobType: string
+  jobTypes: string[]
   location: string
-  time: string | null
-  dates: string[]
+  locationCity?: string | null
+  dates: Array<{ date: string; startTime?: string; endTime?: string }>
   createdAt: string | Date
   company: {
     companyProfile?: {
@@ -69,7 +69,7 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
           filtered = [...filtered].sort((a, b) => parseFloat(a.budget || '0') - parseFloat(b.budget || '0'))
           break
         case 'dates':
-          filtered = [...filtered].sort((a, b) => (b.dates as string[]).length - (a.dates as string[]).length)
+          filtered = [...filtered].sort((a, b) => b.dates.length - a.dates.length)
           break
         case 'recent':
         default:
@@ -194,7 +194,15 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs text-gray-500">Type</p>
-                        <p className="font-medium text-gray-900 truncate">{job.jobType}</p>
+                        <p className="font-medium text-gray-900 truncate">
+                          {job.jobTypes.slice(0, 2).map((type, idx) => (
+                            <span key={type}>
+                              {getJobTypeLabel(type as any)}
+                              {idx < Math.min(job.jobTypes.length, 2) - 1 && ', '}
+                            </span>
+                          ))}
+                          {job.jobTypes.length > 2 && ` +${job.jobTypes.length - 2} more`}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
@@ -202,17 +210,8 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
                         <Calendar className="w-4 h-4 text-green-600" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs text-gray-500">Dates</p>
+                        <p className="text-xs text-gray-500">Events</p>
                         <p className="font-medium text-gray-900">{job.dates.length} day(s)</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center shrink-0">
-                        <Clock className="w-4 h-4 text-orange-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500">Time</p>
-                        <p className="font-medium text-gray-900 truncate">{job.time || 'Not specified'}</p>
                       </div>
                     </div>
                   </div>

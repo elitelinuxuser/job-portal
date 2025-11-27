@@ -48,6 +48,15 @@ export const verificationStatusEnum = pgEnum("verification_status", [
   "verified",
   "rejected",
 ]);
+export const jobTypeEnum = pgEnum("job_type", [
+  "candid_photographer",
+  "cinematographer",
+  "traditional_photographer",
+  "traditional_videographer",
+  "photo_editor",
+  "video_editor",
+  "drone",
+]);
 
 // Users table (synced from Clerk)
 export const users = pgTable("users", {
@@ -132,7 +141,9 @@ export const jobPosts = pgTable("job_posts", {
     .references(() => users.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  dates: jsonb("dates").$type<string[]>().notNull(),
+  dates: jsonb("dates")
+    .$type<Array<{ date: string; startTime?: string; endTime?: string }>>()
+    .notNull(),
   location: text("location").notNull(),
 
   // Structured location fields for Google Maps integration
@@ -145,8 +156,7 @@ export const jobPosts = pgTable("job_posts", {
   locationPlaceId: text("location_place_id"),
 
   budget: decimal("budget", { precision: 10, scale: 2 }),
-  jobType: text("job_type").notNull(),
-  time: text("time"),
+  jobTypes: jobTypeEnum("job_types").array().notNull(),
 
   // Contract details with checkboxes
   contractContentPosting: boolean("contract_content_posting")

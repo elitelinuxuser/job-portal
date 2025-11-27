@@ -1,21 +1,30 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import Link from 'next/link'
 import { 
-  Eye, 
   MapPin, 
   Calendar, 
   Briefcase, 
-  TrendingUp,
-  Clock,
-  Plus
+  ArrowRight,
+  MessageSquare,
+  Plus,
+  MoreVertical,
+  Eye
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { ToggleJobStatus } from '@/components/company/toggle-job-status'
+import { getJobTypeLabel } from '@/lib/constants/job-types'
+import { toggleJobStatus } from '@/lib/actions/jobs'
+import { toast } from 'sonner'
 
 interface Job {
   id: string
@@ -24,7 +33,7 @@ interface Job {
   location: string
   budget: string
   jobType: string
-  dates: string[]
+  dates: Array<{ date: string; startTime?: string; endTime?: string }>
   isActive: boolean
   status: 'active' | 'completed' | 'cancelled' | 'booked'
   createdAt: Date
@@ -138,115 +147,113 @@ export function JobsListWithTabs({ jobs }: JobsListWithTabsProps) {
           <div className="grid gap-6">
             {filteredJobs.map((job) => (
               <Card key={job.id} className="hover:shadow-lg transition-all duration-300">
-                <CardHeader className="bg-gray-50 border-b">
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 bg-linear-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shrink-0">
-                          <Briefcase className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-xl mb-1">{job.title}</CardTitle>
-                          <CardDescription className="line-clamp-2">{job.description}</CardDescription>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <Badge 
-                        variant={job.isActive ? 'default' : 'secondary'} 
-                        className={`${job.isActive ? 'bg-green-600' : 'bg-gray-400'} text-white`}
-                      >
-                        {job.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                      <ToggleJobStatus jobId={job.id} isActive={job.isActive} />
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Job Details */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-                          <MapPin className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs text-gray-500">Location</p>
-                          <p className="font-medium text-gray-900 truncate">{job.location}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center shrink-0">
-                          <Calendar className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs text-gray-500">Dates</p>
-                          <p className="font-medium text-gray-900">{job.dates.length} day(s)</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center shrink-0">
-                          <Clock className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs text-gray-500">Type</p>
-                          <p className="font-medium text-gray-900 truncate">{job.jobType}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center shrink-0">
-                          <TrendingUp className="w-5 h-5 text-emerald-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs text-gray-500">Budget</p>
-                          <p className="font-medium text-emerald-600">₹{job.budget}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Dates Display */}
-                    <div className="pt-4 border-t">
-                      <p className="text-sm text-gray-600 mb-2">Scheduled Dates:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {job.dates.slice(0, 5).map((date, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
-                            <Calendar className="w-3 h-3 mr-1" />
-                            {date}
-                          </Badge>
-                        ))}
-                        {job.dates.length > 5 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{job.dates.length - 5} more
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="pt-4 border-t space-y-3">
-                      <div className="flex items-center gap-4">
-                        <div className="text-sm">
-                          <span className="font-semibold text-indigo-600">{job.responses.length}</span>
-                          <span className="text-gray-600"> response{job.responses.length !== 1 ? 's' : ''}</span>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Posted {format(new Date(job.createdAt), 'MMM d, yyyy')}
-                        </div>
-                      </div>
-                      <Link href={`/company/responses?job=${job.id}`} className="block">
-                        <Button className="w-full bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Responses
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <Link href={`/company/jobs/${job.id}`} className="flex-1 min-w-0">
+                      <CardTitle className="text-lg font-bold hover:text-blue-600 transition-colors line-clamp-2 mb-2">
+                        {job.title}
+                      </CardTitle>
+                    </Link>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreVertical className="w-4 h-4" />
                         </Button>
-                      </Link>
-                    </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem 
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            try {
+                              await toggleJobStatus(job.id)
+                              toast.success(`Job ${job.isActive ? 'deactivated' : 'activated'} successfully!`)
+                            } catch (error) {
+                              toast.error('Failed to update job status')
+                              console.error(error)
+                            }
+                          }}
+                        >
+                          {job.isActive ? 'Deactivate' : 'Activate'}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge 
+                      variant={job.isActive ? 'default' : 'secondary'} 
+                      className={`${job.isActive ? 'bg-green-600' : 'bg-gray-400'} text-white text-xs`}
+                    >
+                      {job.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                    <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold px-3 py-1 text-xs whitespace-nowrap">
+                      ₹{parseFloat(job.budget).toLocaleString('en-IN')}
+                    </Badge>
+                  </div>
+                  <Link href={`/company/jobs/${job.id}`}>
+                    <p className="text-gray-600 line-clamp-2 text-sm">{job.description}</p>
+                  </Link>
+                </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
+                            <MapPin className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500">Location</p>
+                            <p className="font-medium text-gray-900 truncate">{job.location}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center shrink-0">
+                            <Briefcase className="w-4 h-4 text-purple-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500">Type</p>
+                            <p className="font-medium text-gray-900 truncate">{getJobTypeLabel(job.jobType as any)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center shrink-0">
+                            <Calendar className="w-4 h-4 text-green-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500">Events</p>
+                            <p className="font-medium text-gray-900">{job.dates.length} day(s)</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t space-y-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-500">
+                            Posted {format(new Date(job.createdAt), 'MMM d, yyyy')}
+                          </span>
+                          <div className="flex items-center gap-1 text-gray-700">
+                            <MessageSquare className="w-4 h-4" />
+                            <span className="font-semibold">{job.responses.length}</span>
+                            <span>response{job.responses.length !== 1 ? 's' : ''}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Link href={`/company/jobs/${job.id}`} className="flex-1">
+                            <Button className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+                              <ArrowRight className="w-4 h-4 mr-2" />
+                              View Details
+                            </Button>
+                          </Link>
+                          <Link href={`/company/responses?job=${job.id}`} className="flex-1">
+                            <Button variant="outline" className="w-full border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50">
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Responses
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
             ))}
           </div>
         )}

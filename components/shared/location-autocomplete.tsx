@@ -8,6 +8,7 @@ import { Loader2, MapPin } from 'lucide-react'
 declare global {
   interface Window {
     google?: typeof google
+    __googleMapsLoading?: boolean
   }
 }
 
@@ -27,6 +28,7 @@ interface LocationAutocompleteProps {
   placeholder?: string
   className?: string
   error?: string
+  restrictToCities?: boolean // New prop to restrict to cities only
 }
 
 export function LocationAutocomplete({
@@ -34,46 +36,106 @@ export function LocationAutocomplete({
   onChange,
   placeholder = "Search for a location...",
   className = "",
-  error
+  error,
+  restrictToCities = false
 }: LocationAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const [isLoaded, setIsLoaded] = useState(false)
+  const [inputValue, setInputValue] = useState(value)
+  const [isLoaded, setIsLoaded] = useState(() => {
+    // Initialize with loaded state if already available
+    return typeof window !== 'undefined' && Boolean(window.google?.maps?.places)
+  })
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
 
+  // Update input value when prop changes
   useEffect(() => {
-    // Load Google Maps API
-    const loadGoogleMaps = async () => {
-      if (typeof window === 'undefined' || window.google?.maps) {
-        setIsLoaded(true)
-        return
-      }
+    setInputValue(value)
+  }, [value])
 
-      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-      if (!apiKey) {
-        console.error('Google Maps API key not found')
-        return
-      }
+  useEffect(() => {
+    if (typeof window === 'undefined') return
 
-      const script = document.createElement('script')
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
-      script.async = true
-      script.defer = true
-      script.onload = () => setIsLoaded(true)
-      document.head.appendChild(script)
+    // If already loaded, nothing to do
+    if (window.google?.maps?.places) {
+      return
     }
 
-    loadGoogleMaps()
+    // If currently loading, wait for it
+    if (window.__googleMapsLoading) {
+      const checkInterval = setInterval(() => {
+        if (window.google?.maps?.places) {
+          setIsLoaded(true)
+          clearInterval(checkInterval)
+        }
+      }, 100)
+      return () => clearInterval(checkInterval)
+    }
+
+    // Check if script already exists in DOM
+    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]')
+    if (existingScript) {
+      window.__googleMapsLoading = true
+      existingScript.addEventListener('load', () => {
+        window.__googleMapsLoading = false
+        setIsLoaded(true)
+      })
+      return
+    }
+
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    if (!apiKey) {
+      console.error('Google Maps API key not found')
+      return
+    }
+
+    // Mark as loading
+    window.__googleMapsLoading = true
+
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
+    script.async = true
+    script.defer = true
+    script.onload = () => {
+      window.__googleMapsLoading = false
+      setIsLoaded(true)
+    }
+    script.onerror = () => {
+      window.__googleMapsLoading = false
+      console.error('Failed to load Google Maps API')
+    }
+    document.head.appendChild(script)
   }, [])
 
   useEffect(() => {
     if (!isLoaded || !inputRef.current) return
 
+    const inputElement = inputRef.current
+
     // Initialize autocomplete
-    autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-      types: ['establishment', 'geocode'],
+    autocompleteRef.current = new google.maps.places.Autocomplete(inputElement, {
+      types: restrictToCities ? ['(cities)'] : ['establishment', 'geocode'], // Conditionally restrict to cities
       componentRestrictions: { country: 'in' }, // Restrict to India
       fields: ['formatted_address', 'address_components', 'geometry', 'place_id']
     })
+
+    // Fix z-index for autocomplete dropdown to appear above modals
+    // Google Maps creates the dropdown with class 'pac-container'
+    const fixZIndex = () => {
+      const pacContainers = document.querySelectorAll('.pac-container')
+      pacContainers.forEach((container) => {
+        (container as HTMLElement).style.zIndex = '99999'
+      })
+    }
+    
+    // Fix immediately
+    setTimeout(fixZIndex, 100)
+    
+    // Also fix when user focuses the input (dropdown appears)
+    inputElement.addEventListener('focus', fixZIndex)
+    
+    // Set up observer to watch for dropdown creation
+    const observer = new MutationObserver(fixZIndex)
+    observer.observe(document.body, { childList: true, subtree: true })
 
     // Listen for place selection
     autocompleteRef.current.addListener('place_changed', () => {
@@ -108,6 +170,10 @@ export function LocationAutocomplete({
         placeId: place.place_id || null
       }
 
+      // Update the input value to show the selected location
+      const displayValue = restrictToCities ? (city || place.formatted_address || '') : (place.formatted_address || '')
+      setInputValue(displayValue)
+      
       onChange(locationData)
     })
 
@@ -115,8 +181,10 @@ export function LocationAutocomplete({
       if (autocompleteRef.current) {
         google.maps.event.clearInstanceListeners(autocompleteRef.current)
       }
+      observer.disconnect()
+      inputElement.removeEventListener('focus', fixZIndex)
     }
-  }, [isLoaded, onChange])
+  }, [isLoaded, onChange, restrictToCities])
 
   return (
     <div className="relative">
@@ -131,7 +199,8 @@ export function LocationAutocomplete({
         ref={inputRef}
         type="text"
         placeholder={placeholder}
-        defaultValue={value}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
         className={`pl-11 ${className}`}
         disabled={!isLoaded}
       />

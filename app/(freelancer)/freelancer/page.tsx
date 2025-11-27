@@ -1,4 +1,4 @@
-import { getAllActiveJobs } from '@/lib/actions/freelancer'
+import { getAllActiveJobs, getFreelancerProfile } from '@/lib/actions/freelancer'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
@@ -9,34 +9,52 @@ import {
   MapPin,
   Calendar,
   Sparkles,
-  Zap
+  Zap,
+  Clock
 } from 'lucide-react'
 import { JobsListClient } from '@/components/freelancer/jobs-list-client'
 import { Suspense } from 'react'
 import { JobCardSkeleton, FeaturedJobSkeleton } from '@/components/freelancer/job-card-skeleton'
-import { unstable_cache } from 'next/cache'
+import { getJobTypeLabel } from '@/lib/constants/job-types'
 
 // Revalidate every 60 seconds (ISR)
 export const revalidate = 60
 
-// Cache the jobs data with a tag for on-demand revalidation
-const getCachedJobs = unstable_cache(
-  async () => getAllActiveJobs(),
-  ['freelancer-jobs'],
-  {
-    revalidate: 60,
-    tags: ['freelancer-jobs']
-  }
-)
-
 export default async function FreelancerDashboard() {
-  const jobs = await getCachedJobs()
+  const jobs = await getAllActiveJobs()
+  const profile = await getFreelancerProfile()
 
   // Get featured jobs (latest 3)
   const featuredJobs = jobs.slice(0, 3)
 
+  const isPending = profile?.verificationStatus === 'pending'
+
   return (
     <div className="min-h-screen">
+      {/* Pending Approval Banner */}
+      {isPending && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b-2 border-amber-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                <Clock className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  Profile Under Review
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">
+                    Pending
+                  </Badge>
+                </h3>
+                <p className="text-sm text-gray-600 mt-0.5">
+                  You can browse jobs while we verify your profile. You&apos;ll be able to apply once approved.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section - Mobile-First Design */}
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 text-white">
         {/* Decorative Elements */}
@@ -118,9 +136,18 @@ export default async function FreelancerDashboard() {
                           <Badge className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
                             ₹{job.budget}
                           </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {job.jobType}
-                          </Badge>
+                          <div className="flex flex-wrap gap-1 justify-end">
+                            {job.jobTypes.slice(0, 2).map((jobType) => (
+                              <Badge key={jobType} variant="outline" className="text-xs">
+                                {getJobTypeLabel(jobType as any)}
+                              </Badge>
+                            ))}
+                            {job.jobTypes.length > 2 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{job.jobTypes.length - 2}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         <CardTitle className="text-base md:text-lg line-clamp-2 group-hover:text-blue-600 transition-colors">
                           {job.title}
@@ -137,7 +164,7 @@ export default async function FreelancerDashboard() {
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Calendar className="w-4 h-4 shrink-0" />
-                          <span>{(job.dates as string[]).length} date(s) available</span>
+                          <span>{job.dates.length} date(s) available</span>
                         </div>
                       </CardContent>
                     </Card>

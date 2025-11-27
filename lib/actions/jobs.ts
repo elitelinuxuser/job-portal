@@ -11,11 +11,12 @@ import { requireRole } from "@/lib/auth";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import type { JobType } from "@/lib/constants/job-types";
 
 export async function createJobPost(data: {
   title: string;
   description: string;
-  dates: string[];
+  dates: Array<{ date: string; startTime?: string; endTime?: string }>;
   location: string;
   locationFormatted?: string | null;
   locationCity?: string | null;
@@ -25,8 +26,7 @@ export async function createJobPost(data: {
   locationLongitude?: string | null;
   locationPlaceId?: string | null;
   budget?: string;
-  jobType: string;
-  time?: string;
+  jobTypes: JobType[];
   contractContentPosting: boolean;
   contractAdvancePayment: boolean;
   contractPaymentAfterShot: boolean;
@@ -82,6 +82,33 @@ export async function getCompanyJobs() {
   });
 
   return jobs;
+}
+
+export async function getJobPostById(jobId: string) {
+  await requireRole("company");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    return null;
+  }
+
+  const job = await db.query.jobPosts.findFirst({
+    where: and(eq(jobPosts.id, jobId), eq(jobPosts.companyId, userId)),
+    with: {
+      responses: {
+        with: {
+          freelancer: {
+            with: {
+              freelancerProfile: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return job || null;
 }
 
 export async function getJobResponses(jobId: string) {
@@ -145,8 +172,7 @@ export async function createBookingRequest(data: {
     dates: job.dates,
     location: job.location,
     budget: job.budget,
-    jobType: job.jobType,
-    time: job.time,
+    jobTypes: job.jobTypes,
     contractContentPosting: job.contractContentPosting,
     contractAdvancePayment: job.contractAdvancePayment,
     contractPaymentAfterShot: job.contractPaymentAfterShot,
