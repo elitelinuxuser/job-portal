@@ -13,11 +13,11 @@ import { toast } from 'sonner'
 import { createJobPost } from '@/lib/actions/jobs'
 import { useRouter } from 'next/navigation'
 import { Plus, X, Briefcase, FileText, MapPin, IndianRupee, Camera, Clock, Calendar, FileCheck, Sparkles } from 'lucide-react'
+import { LocationAutocomplete, LocationData } from '@/components/shared/location-autocomplete'
 
 const schema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   description: z.string().min(20, 'Description must be at least 20 characters'),
-  location: z.string().min(2, 'Location is required'),
   budget: z.string().optional(),
   jobType: z.string().min(2, 'Job type is required'),
   time: z.string().optional(),
@@ -30,6 +30,8 @@ export function JobPostForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [dates, setDates] = useState<string[]>([''])
+  const [locationData, setLocationData] = useState<LocationData | null>(null)
+  const [locationError, setLocationError] = useState<string>('')
   const [contractOptions, setContractOptions] = useState({
     contentPosting: false,
     advancePayment: false,
@@ -68,10 +70,24 @@ export function JobPostForm() {
       return
     }
 
+    if (!locationData || !locationData.formatted) {
+      setLocationError('Please select a location from the suggestions')
+      toast.error('Please select a valid location')
+      return
+    }
+
     setLoading(true)
     try {
       const result = await createJobPost({
         ...data,
+        location: locationData.formatted,
+        locationFormatted: locationData.formatted,
+        locationCity: locationData.city,
+        locationState: locationData.state,
+        locationCountry: locationData.country,
+        locationLatitude: locationData.latitude?.toString(),
+        locationLongitude: locationData.longitude?.toString(),
+        locationPlaceId: locationData.placeId,
         dates: validDates,
         contractContentPosting: contractOptions.contentPosting,
         contractAdvancePayment: contractOptions.advancePayment,
@@ -143,24 +159,23 @@ export function JobPostForm() {
       {/* Location & Budget */}
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-3">
-          <Label htmlFor="location" className="text-base font-semibold text-gray-900 flex items-center gap-2">
+          <Label className="text-base font-semibold text-gray-900 flex items-center gap-2">
             <span className="w-8 h-8 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center shrink-0">
               <MapPin className="w-4 h-4 text-white" />
             </span>
             Location
             <span className="text-red-500">*</span>
           </Label>
-          <Input
-            id="location"
-            {...register('location')}
-            placeholder="City, Venue"
+          <LocationAutocomplete
+            value={locationData?.formatted || ''}
+            onChange={(data) => {
+              setLocationData(data)
+              setLocationError('')
+            }}
+            placeholder="Search for venue or city..."
             className="h-12 border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-colors rounded-xl text-base"
+            error={locationError}
           />
-          {errors.location && (
-            <p className="text-sm text-red-600 flex items-center gap-1">
-              <span>⚠️</span> {errors.location.message}
-            </p>
-          )}
         </div>
 
         <div className="space-y-3">

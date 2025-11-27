@@ -17,6 +17,13 @@ export async function createJobPost(data: {
   description: string;
   dates: string[];
   location: string;
+  locationFormatted?: string | null;
+  locationCity?: string | null;
+  locationState?: string | null;
+  locationCountry?: string | null;
+  locationLatitude?: string | null;
+  locationLongitude?: string | null;
+  locationPlaceId?: string | null;
   budget?: string;
   jobType: string;
   time?: string;

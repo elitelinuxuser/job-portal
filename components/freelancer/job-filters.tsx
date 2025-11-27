@@ -12,14 +12,12 @@ import {
   X,
   MapPin,
   Briefcase,
-  IndianRupee,
-  Calendar
+  IndianRupee
 } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
@@ -151,17 +149,17 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Search Bar & Filter Button */}
       <div className="flex gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             type="text"
             placeholder="Search jobs, companies, or keywords..."
             value={filters.search}
             onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-            className="pl-11 h-12 text-base"
+            className="pl-10 h-10 text-sm placeholder:text-sm bg-white"
           />
         </div>
         
@@ -169,10 +167,10 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
           <SheetTrigger asChild>
             <Button 
               variant="outline" 
-              size="lg"
-              className="h-12 px-6 gap-2 relative"
+              size="default"
+              className="h-10 px-4 gap-2 relative"
             >
-              <SlidersHorizontal className="w-5 h-5" />
+              <SlidersHorizontal className="w-4 h-4" />
               <span className="hidden sm:inline">Filters</span>
               {activeFilterCount > 0 && (
                 <Badge className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center bg-blue-600">
@@ -181,15 +179,42 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle className="text-2xl">Filters</SheetTitle>
-              <SheetDescription>
-                Refine your job search with these filters
-              </SheetDescription>
-            </SheetHeader>
+          <SheetContent 
+            side="bottom" 
+            className="h-auto max-h-[92vh] px-0 pb-0 gap-0 pt-0 border-none rounded-t-3xl overflow-hidden"
+            hideClose
+          >
+            {/* Gradient Header */}
+            <div className="relative bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 px-6 pt-6 pb-6">
+              <button
+                onClick={() => setIsOpen(false)}
+                className="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors z-20"
+                aria-label="Close"
+              >
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
 
-            <div className="mt-6 space-y-6">
+              <div className="pr-12">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <SlidersHorizontal className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                
+                <SheetTitle className="text-2xl font-bold text-white mb-2">
+                  Filters
+                </SheetTitle>
+                
+                <SheetDescription className="text-blue-50 text-base">
+                  Refine your job search with these filters
+                </SheetDescription>
+              </div>
+            </div>
+
+            {/* Filter Content */}
+            <div className="px-6 pt-6 pb-safe bg-white overflow-y-auto max-h-[70vh] space-y-6">
               {/* Location Filter */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
@@ -270,46 +295,24 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
                 </div>
               </div>
 
-              {/* Sort By */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Calendar className="w-4 h-4 text-gray-600" />
-                  <Label className="text-base font-semibold">Sort By</Label>
-                </div>
-                <div className="space-y-2">
-                  {[
-                    { value: 'recent', label: 'Most Recent' },
-                    { value: 'budget-high', label: 'Budget: High to Low' },
-                    { value: 'budget-low', label: 'Budget: Low to High' },
-                    { value: 'dates', label: 'Most Dates Available' }
-                  ].map(option => (
-                    <div key={option.value} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`sort-${option.value}`}
-                        checked={filters.sortBy === option.value}
-                        onCheckedChange={() => setFilters(prev => ({ ...prev, sortBy: option.value as any }))}
-                      />
-                      <label
-                        htmlFor={`sort-${option.value}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {option.label}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Clear All */}
-              {activeFilterCount > 0 && (
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-6 sticky bottom-0 bg-white pb-6 border-t">
+                {activeFilterCount > 0 && (
+                  <Button 
+                    variant="outline" 
+                    onClick={clearAllFilters}
+                    className="flex-1"
+                  >
+                    Clear All
+                  </Button>
+                )}
                 <Button 
-                  variant="outline" 
-                  onClick={clearAllFilters}
-                  className="w-full"
+                  onClick={() => setIsOpen(false)}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
                 >
-                  Clear All Filters
+                  Apply Filters
                 </Button>
-              )}
+              </div>
             </div>
           </SheetContent>
         </Sheet>

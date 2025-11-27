@@ -16,6 +16,13 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { JobFilters, FilterState } from './job-filters'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface Job {
   id: string
@@ -48,6 +55,30 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
     setFilteredJobs(filtered)
   }
 
+  const handleSortChange = (sortBy: FilterState['sortBy']) => {
+    if (currentFilters) {
+      const updatedFilters = { ...currentFilters, sortBy }
+      setCurrentFilters(updatedFilters)
+      // Re-apply filters with new sort
+      let filtered = filteredJobs
+      switch (sortBy) {
+        case 'budget-high':
+          filtered = [...filtered].sort((a, b) => parseFloat(b.budget || '0') - parseFloat(a.budget || '0'))
+          break
+        case 'budget-low':
+          filtered = [...filtered].sort((a, b) => parseFloat(a.budget || '0') - parseFloat(b.budget || '0'))
+          break
+        case 'dates':
+          filtered = [...filtered].sort((a, b) => (b.dates as string[]).length - (a.dates as string[]).length)
+          break
+        case 'recent':
+        default:
+          filtered = [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      }
+      setFilteredJobs(filtered)
+    }
+  }
+
   const toggleSaveJob = (jobId: string) => {
     setSavedJobs(prev => {
       const newSet = new Set(prev)
@@ -61,7 +92,7 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Filters Section */}
       <JobFilters 
         jobs={initialJobs}
@@ -69,20 +100,29 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
       />
 
       {/* Results Count */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600">
-          Showing <span className="font-semibold text-gray-900">{filteredJobs.length}</span> of {initialJobs.length} jobs
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs sm:text-sm text-gray-600 shrink-0">
+          <span className="hidden sm:inline">Showing </span>
+          <span className="font-semibold text-gray-900">{filteredJobs.length}</span>
+          <span className="hidden sm:inline"> of {initialJobs.length}</span> jobs
         </p>
-        {currentFilters?.sortBy && (
-          <p className="text-sm text-gray-600">
-            Sorted by: <span className="font-medium">{
-              currentFilters.sortBy === 'recent' ? 'Most Recent' :
-              currentFilters.sortBy === 'budget-high' ? 'Budget: High to Low' :
-              currentFilters.sortBy === 'budget-low' ? 'Budget: Low to High' :
-              'Most Dates Available'
-            }</span>
-          </p>
-        )}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span className="text-xs sm:text-sm text-gray-600 font-medium">Sort By:</span>
+          <Select
+            value={currentFilters?.sortBy || 'recent'}
+            onValueChange={(value) => handleSortChange(value as FilterState['sortBy'])}
+          >
+            <SelectTrigger className="w-[140px] sm:w-[200px] h-8 sm:h-9 text-xs sm:text-sm bg-white border-gray-300">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="recent">Most Recent</SelectItem>
+              <SelectItem value="budget-high">Budget: High to Low</SelectItem>
+              <SelectItem value="budget-low">Budget: Low to High</SelectItem>
+              <SelectItem value="dates">Most Dates Available</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Jobs Grid */}
@@ -97,29 +137,34 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-4">
           {filteredJobs.map((job) => (
-            <Card key={job.id} className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-transparent hover:border-l-blue-600 group">
-              <CardHeader>
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <CardTitle className="text-lg mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">{job.title}</CardTitle>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0 h-8 w-8"
-                        onClick={() => toggleSaveJob(job.id)}
-                      >
-                        <Heart 
-                          className={`w-5 h-5 transition-colors ${
-                            savedJobs.has(job.id) 
-                              ? 'fill-red-500 text-red-500' 
-                              : 'text-gray-400 hover:text-red-500'
-                          }`} 
-                        />
-                      </Button>
-                    </div>
+            <Link key={job.id} href={`/freelancer/jobs/${job.id}`} className="block">
+              <Card className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-transparent hover:border-l-blue-600 group cursor-pointer">
+                <CardHeader>
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <CardTitle className="text-lg mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">{job.title}</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 h-8 w-8"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            toggleSaveJob(job.id)
+                          }}
+                        >
+                          <Heart 
+                            className={`w-5 h-5 transition-colors ${
+                              savedJobs.has(job.id) 
+                                ? 'fill-red-500 text-red-500' 
+                                : 'text-gray-400 hover:text-red-500'
+                            }`} 
+                          />
+                        </Button>
+                      </div>
                     <CardDescription className="flex items-center gap-2">
                       <Building2 className="w-4 h-4" />
                       <span>{job.company.companyProfile?.companyName || 'Company'}</span>
@@ -176,16 +221,15 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
                     <div className="text-sm text-gray-500">
                       Posted {format(new Date(job.createdAt), 'MMM d, yyyy')}
                     </div>
-                    <Link href={`/freelancer/jobs/${job.id}`}>
-                      <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
-                        View Details
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </Link>
+                    <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+                      View Details
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
+            </Link>
           ))}
         </div>
       )}

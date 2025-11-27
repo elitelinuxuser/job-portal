@@ -44,9 +44,9 @@ export const bookingStatusEnum = pgEnum("booking_status", [
   "completed",
 ]);
 export const verificationStatusEnum = pgEnum("verification_status", [
-  "unverified",
   "pending",
   "verified",
+  "rejected",
 ]);
 
 // Users table (synced from Clerk)
@@ -134,6 +134,16 @@ export const jobPosts = pgTable("job_posts", {
   description: text("description").notNull(),
   dates: jsonb("dates").$type<string[]>().notNull(),
   location: text("location").notNull(),
+
+  // Structured location fields for Google Maps integration
+  locationFormatted: text("location_formatted"),
+  locationCity: text("location_city"),
+  locationState: text("location_state"),
+  locationCountry: text("location_country"),
+  locationLatitude: decimal("location_latitude", { precision: 10, scale: 7 }),
+  locationLongitude: decimal("location_longitude", { precision: 10, scale: 7 }),
+  locationPlaceId: text("location_place_id"),
+
   budget: decimal("budget", { precision: 10, scale: 2 }),
   jobType: text("job_type").notNull(),
   time: text("time"),

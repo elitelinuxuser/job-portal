@@ -13,12 +13,13 @@ import { createCompanyProfile } from '@/lib/actions/company'
 import { useRouter } from 'next/navigation'
 import { upload } from '@vercel/blob/client'
 import { Upload, X, Image as ImageIcon, Building2, User, MapPin, Calendar, FileText, Sparkles } from 'lucide-react'
+import { LocationAutocomplete, LocationData } from '@/components/shared/location-autocomplete'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const schema = z.object({
   companyName: z.string().min(2, 'Company name is required'),
   contactPersonName: z.string().min(2, 'Contact person name is required'),
   whatsappNumber: z.string().min(10, 'Valid WhatsApp number is required'),
-  location: z.string().min(2, 'Location is required'),
   startedIn: z.string().optional(),
 })
 
@@ -30,6 +31,8 @@ export function OnboardingForm() {
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [proofFile, setProofFile] = useState<File | null>(null)
+  const [locationData, setLocationData] = useState<LocationData | null>(null)
+  const [locationError, setLocationError] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const proofInputRef = useRef<HTMLInputElement>(null)
 
@@ -78,6 +81,12 @@ export function OnboardingForm() {
   }
 
   async function onSubmit(data: FormData) {
+    if (!locationData || !locationData.formatted) {
+      setLocationError('Please select a location from the suggestions')
+      toast.error('Please select a valid location')
+      return
+    }
+
     setLoading(true)
     try {
       let logoUrl: string | undefined
@@ -103,6 +112,7 @@ export function OnboardingForm() {
 
       const result = await createCompanyProfile({
         ...data,
+        location: locationData.city || locationData.formatted,
         startedIn: data.startedIn ? parseInt(data.startedIn) : undefined,
         logoUrl,
         proofOfOwnershipUrl,
@@ -197,24 +207,23 @@ export function OnboardingForm() {
 
       {/* Location */}
       <div className="space-y-3">
-        <Label htmlFor="location" className="text-base font-semibold text-gray-900 flex items-center gap-2">
+        <Label className="text-base font-semibold text-gray-900 flex items-center gap-2">
           <span className="w-8 h-8 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center shrink-0">
             <MapPin className="w-4 h-4 text-white" />
           </span>
           Location (Based in)
           <span className="text-red-500">*</span>
         </Label>
-        <Input
-          id="location"
-          {...register('location')}
-          placeholder="City, State"
+        <LocationAutocomplete
+          value={locationData?.formatted || ''}
+          onChange={(data) => {
+            setLocationData(data)
+            setLocationError('')
+          }}
+          placeholder="Search for city or location..."
           className="h-12 border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-colors rounded-xl text-base"
+          error={locationError}
         />
-        {errors.location && (
-          <p className="text-sm text-red-600 flex items-center gap-1">
-            <span>⚠️</span> {errors.location.message}
-          </p>
-        )}
       </div>
 
       {/* Started In */}
@@ -226,12 +235,23 @@ export function OnboardingForm() {
           Started In (Year)
           <span className="text-sm font-normal text-gray-500">(Optional)</span>
         </Label>
-        <Input
-          id="startedIn"
-          type="number"
-          {...register('startedIn')}
-          placeholder="2020"
-          className="h-12 border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors rounded-xl text-base"
+        <Controller
+          name="startedIn"
+          control={control}
+          render={({ field }) => (
+            <Select onValueChange={field.onChange} value={field.value}>
+              <SelectTrigger className="w-full !h-12 border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors rounded-xl text-base !px-4 !py-0">
+                <SelectValue placeholder="Select year..." />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: new Date().getFullYear() - 1949 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         />
         {errors.startedIn && (
           <p className="text-sm text-red-600 flex items-center gap-1">
