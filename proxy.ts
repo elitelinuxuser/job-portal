@@ -47,7 +47,7 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Get user role and onboarding status from session claims (no API call needed!)
-  const publicMetadata = (sessionClaims as any)?.publicMetadata as
+  const publicMetadata = sessionClaims?.publicMetadata as
     | { role?: string; onboardingStatus?: string }
     | undefined;
   let role = publicMetadata?.role;
@@ -158,7 +158,3 @@ export const config = {
     "/(api|trpc)(.*)",
   ],
 };
-
-// Force middleware to run on Node.js runtime instead of Edge
-// This is required because we're using postgres-js which needs Node.js APIs
-export const runtime = "nodejs";
