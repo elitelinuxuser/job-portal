@@ -103,88 +103,80 @@ export function ResponsesList({ responses }: ResponsesListProps) {
       </div>
 
       {displayedResponses.length === 0 ? (
-        <Card className="border-2 border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <MessageSquare className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No Unread Responses
-            </h3>
-            <p className="text-gray-600 text-center">
-              All responses have been viewed
-            </p>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+            <MessageSquare className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            No Unread Responses
+          </h3>
+          <p className="text-gray-600">
+            All responses have been viewed
+          </p>
+        </div>
       ) : (
-        <div className="space-y-3">
-          {displayedResponses.map((response) => {
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {displayedResponses.map((response, index) => {
             const isUnread = !response.viewedAt
             
             return (
-              <Card 
-                key={response.id} 
-                className={`group hover:shadow-md transition-all duration-200 cursor-pointer ${
+              <div
+                key={response.id}
+                className={`group cursor-pointer transition-all duration-150 border-l-4 ${
                   isUnread 
-                    ? 'bg-white border-l-4 border-l-indigo-600' 
-                    : 'bg-gray-50 border-l-4 border-l-transparent'
-                }`}
+                    ? 'bg-white border-l-indigo-600 hover:bg-indigo-50/50' 
+                    : 'bg-gray-50/50 border-l-transparent hover:bg-gray-100/50'
+                } ${index !== displayedResponses.length - 1 ? 'border-b border-gray-200' : ''}`}
                 onClick={() => openResponseDetails(response)}
               >
-                <CardContent className="px-4">
-                  {/* Header - Freelancer info */}
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold shrink-0 shadow-sm">
+                <div className="px-4 py-4">
+                  {/* Header - Freelancer and Job */}
+                  <div className="flex items-start gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold shrink-0 text-sm">
                       {(response.freelancer.freelancerProfile?.name || 'F').charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-baseline justify-between gap-2 mb-0.5">
                         <h3 className={`truncate ${
-                          isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'
+                          isUnread ? 'font-semibold text-gray-900' : 'font-normal text-gray-700'
                         }`}>
                           {response.freelancer.freelancerProfile?.name || 'Freelancer'}
                         </h3>
+                        <span className="text-xs text-gray-500 shrink-0">
+                          {format(new Date(response.createdAt), 'MMM d')}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                        <Briefcase className="w-3.5 h-3.5 shrink-0 text-indigo-600" />
+                      <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-2">
+                        <Briefcase className="w-3 h-3 shrink-0 text-gray-400" />
                         <span className="truncate">{response.job.title}</span>
                       </div>
                     </div>
                   </div>
 
-              {/* Message */}
-              <div className={`rounded-lg p-3 mb-3 border ${
-                isUnread 
-                  ? 'bg-gray-50 border-gray-200' 
-                  : 'bg-white border-gray-200'
-              }`}>
-                {response.message ? (
-                  <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed">
-                    {response.message}
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-400 italic">No message provided</p>
-                )}
-              </div>
-              
-              {/* Footer - Meta info */}
-                <div className="flex items-center justify-between gap-3 text-xs text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                    <span>{format(new Date(response.createdAt), 'MMM d')}</span>
+                  {/* Message */}
+                  <div className="pl-13">
+                    {response.message ? (
+                      <p className={`text-sm line-clamp-2 leading-relaxed mb-2 ${
+                        isUnread ? 'text-gray-700' : 'text-gray-600'
+                      }`}>
+                        {response.message}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-400 italic mb-2">No message provided</p>
+                    )}
+                    
+                    {/* Price badge */}
+                    {response.proposedPrice && (
+                      <div className="flex items-center gap-1 text-xs">
+                        <IndianRupee className="w-3.5 h-3.5 text-green-700" />
+                        <span className="font-semibold text-green-700">₹{response.proposedPrice}</span>
+                      </div>
+                    )}
                   </div>
-                  
-                  {response.proposedPrice && (
-                    <div className="flex items-center gap-1 px-2 py-0.5 bg-green-50 border border-green-200 rounded-full">
-                      <IndianRupee className="w-3.5 h-3.5 text-green-700" />
-                      <span className="font-semibold text-green-700">{response.proposedPrice}</span>
-                    </div>
-                  )}
                 </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+              </div>
+            )
+          })}
         </div>
       )}
 

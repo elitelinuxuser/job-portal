@@ -13,7 +13,7 @@ import { eq, and, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { JobType } from "@/lib/constants/job-types";
 
-export async function createJobPost(data: {
+export interface Job {
   title: string;
   description: string;
   dates: Array<{ date: string; startTime?: string; endTime?: string }>;
@@ -33,7 +33,9 @@ export async function createJobPost(data: {
   contractContentOwnership: boolean;
   contractSdCard: boolean;
   contractAdditionalDetails?: string;
-}) {
+}
+
+export async function createJobPost(data: Job) {
   await requireRole("company");
 
   const { userId } = await auth();

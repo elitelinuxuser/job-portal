@@ -29,21 +29,28 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { cn } from '@/lib/utils'
-import { JOB_TYPE_OPTIONS, getJobTypeLabel } from '@/lib/constants/job-types'
+import { JOB_TYPE_OPTIONS, JobType, getJobTypeLabel } from '@/lib/constants/job-types'
 import { LocationAutocomplete, LocationData } from '@/components/shared/location-autocomplete'
+import { Job } from '@/lib/actions/jobs'
 
 export interface FilterState {
   search: string
   locationSearch: string
-  jobTypes: string[]
+  jobTypes: JobType[]
   minBudget: string
   maxBudget: string
   sortBy: 'recent' | 'budget-high' | 'budget-low' | 'dates'
 }
 
+interface JobPost extends Job {
+  company?: any;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface JobFiltersProps {
-  jobs: any[]
-  onFilterChange: (filters: FilterState, filteredJobs: any[]) => void
+  jobs: JobPost[]
+  onFilterChange: (filters: FilterState, filteredJobs: JobPost[]) => void
 }
 
 export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
@@ -86,7 +93,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
     // Job type filter - check if any of the job's types match any selected filter
     if (filters.jobTypes.length > 0) {
       filtered = filtered.filter(job => 
-        job.jobTypes.some(jobType => filters.jobTypes.includes(jobType))
+        job.jobTypes.some((jobType: JobType) => filters.jobTypes.includes(jobType))
       )
     }
 
@@ -109,7 +116,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
         filtered.sort((a, b) => parseFloat(a.budget || '0') - parseFloat(b.budget || '0'))
         break
       case 'dates':
-        filtered.sort((a, b) => (b.dates as string[]).length - (a.dates as string[]).length)
+        filtered.sort((a, b) => (b.dates).length - (a.dates).length)
         break
       case 'recent':
       default:
@@ -130,7 +137,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
   //   }))
   // }
 
-  const handleJobTypeToggle = (jobType: string) => {
+  const handleJobTypeToggle = (jobType: JobType) => {
     setFilters(prev => ({
       ...prev,
       jobTypes: prev.jobTypes.includes(jobType)
@@ -159,7 +166,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
     if (type === 'location') {
       setFilters(prev => ({ ...prev, locationSearch: '' }))
     } else if (type === 'jobType' && value) {
-      handleJobTypeToggle(value)
+      handleJobTypeToggle(value as JobType)
     } else if (type === 'budget') {
       setFilters(prev => ({ ...prev, minBudget: '', maxBudget: '' }))
     }
@@ -202,7 +209,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
             hideClose
           >
             {/* Gradient Header */}
-            <div className="relative bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 px-6 pt-6 pb-6">
+            <div className="relative bg-linear-to-br from-blue-600 via-blue-500 to-cyan-500 px-6 pt-6 pb-6">
               <button
                 onClick={() => setIsOpen(false)}
                 className="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors z-20"
@@ -244,7 +251,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
                     // Store the city name for filtering
                     setFilters(prev => ({ 
                       ...prev, 
-                      locationSearch: locationData.city || locationData.formatted 
+                      locationSearch: locationData.formatted 
                     }))
                   }}
                   placeholder="Search by city..."
@@ -273,7 +280,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
                         {filters.jobTypes.length === 0 ? (
                           <span className="text-gray-500">Select job types...</span>
                         ) : filters.jobTypes.length === 1 ? (
-                          getJobTypeLabel(filters.jobTypes[0] as any)
+                          getJobTypeLabel(filters.jobTypes[0] as JobType)
                         ) : (
                           `${filters.jobTypes.length} types selected`
                         )}
@@ -356,7 +363,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
                 )}
                 <Button 
                   onClick={() => setIsOpen(false)}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                  className="flex-1 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
                 >
                   Apply Filters
                 </Button>
@@ -391,7 +398,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
               onClick={() => removeFilterChip('jobType', jobType)}
             >
               <Briefcase className="w-3 h-3" />
-              {getJobTypeLabel(jobType as any)}
+              {getJobTypeLabel(jobType as JobType)}
               <X className="w-3 h-3 ml-1" />
             </Badge>
           ))}

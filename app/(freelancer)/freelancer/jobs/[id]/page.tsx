@@ -195,8 +195,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               </CardContent>
             </Card>
           ) : myResponse ? (
-            <Card className="hidden md:block rounded-none sm:rounded-lg border-x-0 sm:border-x shadow-none sm:shadow-lg">
-              <CardHeader className="bg-green-50 border-b border-green-200">
+            <Card className="hidden md:block rounded-none sm:rounded-lg border-x-0 sm:border-x shadow-none sm:shadow-lg pt-0">
+              <CardHeader className="bg-green-50 border-b border-green-200 pt-6">
                 <div className="flex items-center gap-3 text-green-800">
                   <CheckCircle2 className="w-6 h-6" />
                   <div>
@@ -213,7 +213,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                   </div>
                   <div>
                     <p className="text-sm text-green-700 font-medium">Your Proposed Budget</p>
-                    <p className="text-2xl font-bold text-green-800">₹{myResponse.proposedPrice}</p>
+                    <p className="font-bold text-green-800">{myResponse.proposedPrice}</p>
                   </div>
                 </div>
 
@@ -221,7 +221,6 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 {myResponse.message && (
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                      <Award className="w-4 h-4 text-blue-600" />
                       Your Message
                     </h3>
                     <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">

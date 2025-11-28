@@ -25,7 +25,7 @@ export const JOB_TYPE_LABELS: Record<JobType, string> = {
 // Array of all job types for dropdowns/selects
 export const JOB_TYPE_OPTIONS = Object.entries(JOB_TYPE_LABELS).map(
   ([value, label]) => ({
-    value,
+    value: value as JobType,
     label,
   })
 );

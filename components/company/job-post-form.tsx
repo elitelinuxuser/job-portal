@@ -261,7 +261,7 @@ export function JobPostForm() {
 
         <div className="space-y-3">
           <Label htmlFor="budget" className="text-base font-semibold text-gray-900 flex items-center gap-2">
-            <span className="w-8 h-8 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center shrink-0">
+            <span className="w-8 h-8 bg-linear-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center shrink-0">
               <IndianRupee className="w-4 h-4 text-white" />
             </span>
             Budget
