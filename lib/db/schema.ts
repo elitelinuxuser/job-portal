@@ -194,6 +194,7 @@ export const jobResponses = pgTable("job_responses", {
   message: text("message"),
   proposedPrice: decimal("proposed_price", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  viewedAt: timestamp("viewed_at"),
 });
 
 // Booking requests (Company sends to Freelancer)

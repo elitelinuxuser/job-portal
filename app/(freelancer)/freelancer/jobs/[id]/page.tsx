@@ -39,7 +39,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         <div className="px-0 sm:px-6 lg:px-8 space-y-6">
           {/* Header Card - Mobile Optimized */}
           <Card className="rounded-none sm:rounded-lg border-t-4 border-t-blue-600 border-x-0 sm:border-x shadow-none sm:shadow-lg">
-            <CardHeader className="space-y-4 pb-4">
+            <CardHeader className="space-y-2">
               {/* Back Button Integrated */}
               <Link href="/freelancer">
                 <Button variant="ghost" size="sm" className="gap-2 -ml-2 hover:bg-gray-100 text-gray-600">
@@ -48,13 +48,11 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 </Button>
               </Link>
 
-              <div className="space-y-3">
-                <div>
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-2">{job.title}</h1>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Building2 className="w-4 h-4 shrink-0" />
-                    <span className="font-medium">{job.company.companyProfile?.companyName || 'Company'}</span>
-                  </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-2">{job.title}</h1>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Building2 className="w-4 h-4 shrink-0" />
+                  <span className="font-medium">{job.company.companyProfile?.companyName || 'Company'}</span>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 pt-2">
@@ -81,7 +79,6 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               {/* Description */}
               <div>
                 <h2 className="font-semibold text-lg mb-3 text-gray-900 flex items-center gap-2">
-                  <Award className="w-5 h-5 text-blue-600" />
                   Job Description
                 </h2>
                 <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{job.description}</p>
@@ -91,7 +88,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               <div>
                 <h2 className="font-semibold text-lg mb-3 text-gray-900">Key Details</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                  <div className="flex items-center gap-3 p-4 bg-linear-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
                     <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
                       <MapPin className="w-5 h-5 text-white" />
                     </div>
@@ -101,7 +98,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+                  <div className="flex items-center gap-3 p-4 bg-linear-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
                     <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center shrink-0">
                       <IndianRupee className="w-5 h-5 text-white" />
                     </div>
@@ -116,7 +113,6 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               {/* Dates Section - Scrollable on Mobile */}
               <div>
                 <h2 className="font-semibold text-lg mb-3 text-gray-900 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-blue-600" />
                   Available Dates
                 </h2>
                 <div className="flex flex-wrap gap-2">

@@ -406,3 +406,39 @@ export async function completeJob(jobId: string) {
 
   return { success: true };
 }
+
+export async function markResponseAsViewed(responseId: string) {
+  await requireRole("company");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Verify the response belongs to a job owned by this company
+  const response = await db.query.jobResponses.findFirst({
+    where: eq(jobResponses.id, responseId),
+    with: {
+      job: true,
+    },
+  });
+
+  if (!response || response.job.companyId !== userId) {
+    throw new Error("Response not found or unauthorized");
+  }
+
+  // Only mark as viewed if not already viewed
+  if (!response.viewedAt) {
+    await db
+      .update(jobResponses)
+      .set({
+        viewedAt: new Date(),
+      })
+      .where(eq(jobResponses.id, responseId));
+
+    revalidatePath("/company/responses");
+  }
+
+  return { success: true };
+}

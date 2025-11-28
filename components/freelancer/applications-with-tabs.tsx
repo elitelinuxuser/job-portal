@@ -138,7 +138,34 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
                   <div className="flex items-start gap-4">
                     {/* Left side - Job info */}
                     <div className="flex-1 min-w-0 space-y-3">
-                      {/* Header row with title and optional status */}
+                      {/* Top row - Job types and Date */}
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        {/* Job types */}
+                        {application.job.jobTypes.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {application.job.jobTypes.slice(0, 3).map((type) => (
+                              <span key={type} className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                                {getJobTypeLabel(type)}
+                              </span>
+                            ))}
+                            {application.job.jobTypes.length > 1 && (
+                              <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                                +{application.job.jobTypes.length - 1}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Date Applied */}
+                        <div className="flex items-center gap-2 text-gray-600 text-sm">
+                          <Calendar className="w-4 h-4 shrink-0 text-gray-400" />
+                          <span>
+                            {format(new Date(application.createdAt), 'MMM d, yyyy')}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Title row with optional status */}
                       <div className="flex items-start justify-between gap-3">
                         <h3 className="font-semibold text-base text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 flex-1">
                           {application.job.title}
@@ -151,21 +178,13 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
                         )}
                       </div>
                       
-                      {/* Meta information grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                      {/* Meta information - Company and Amount */}
+                      <div className="flex items-center gap-4 flex-wrap text-sm">
                         {/* Company */}
                         <div className="flex items-center gap-2 text-gray-600">
                           <Building2 className="w-4 h-4 shrink-0 text-gray-400" />
                           <span className="truncate font-medium">
                             {application.job.company.companyProfile?.companyName || 'Company'}
-                          </span>
-                        </div>
-                        
-                        {/* Date Applied */}
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Calendar className="w-4 h-4 shrink-0 text-gray-400" />
-                          <span>
-                            {format(new Date(application.createdAt), 'MMM d, yyyy')}
                           </span>
                         </div>
                         
@@ -177,22 +196,6 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
                           </div>
                         )}
                       </div>
-                      
-                      {/* Job types */}
-                      {application.job.jobTypes.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {application.job.jobTypes.slice(0, 3).map((type) => (
-                            <span key={type} className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
-                              {getJobTypeLabel(type)}
-                            </span>
-                          ))}
-                          {application.job.jobTypes.length > 3 && (
-                            <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
-                              +{application.job.jobTypes.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      )}
                     </div>
                     
                     {/* Right side - View details arrow */}
@@ -239,10 +242,10 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
       </div>
       
       {/* Custom Pills Navigation */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex gap-3">
         <button
           onClick={() => setActiveTab('under-review')}
-          className={`px-4 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
+          className={`flex-1 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
             activeTab === 'under-review'
               ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -258,7 +261,7 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
 
         <button
           onClick={() => setActiveTab('closed')}
-          className={`px-4 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
+          className={`flex-1 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
             activeTab === 'closed'
               ? 'bg-gray-700 text-white shadow-lg shadow-gray-700/30'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
