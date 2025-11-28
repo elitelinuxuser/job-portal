@@ -7,7 +7,8 @@ import {
   Calendar, 
   Search,
   Menu,
-  X
+  X,
+  FileText
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -44,6 +45,15 @@ export function FreelancerNav() {
                 <Search className="w-4 h-4" />
               </div>
               <span>Browse Jobs</span>
+            </Link>
+            <Link 
+              href="/freelancer/applications" 
+              className="flex items-center space-x-2 px-4 py-2.5 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 font-medium group"
+            >
+              <div className="w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-blue-100 rounded-lg transition-colors">
+                <FileText className="w-4 h-4" />
+              </div>
+              <span>My Applications</span>
             </Link>
             <Link 
               href="/freelancer/bookings" 
@@ -91,6 +101,16 @@ export function FreelancerNav() {
                 <Search className="w-5 h-5" />
               </div>
               <span className="font-medium">Browse Jobs</span>
+            </Link>
+            <Link 
+              href="/freelancer/applications"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg">
+                <FileText className="w-5 h-5" />
+              </div>
+              <span className="font-medium">My Applications</span>
             </Link>
             <Link 
               href="/freelancer/bookings"

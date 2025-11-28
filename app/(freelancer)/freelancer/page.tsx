@@ -8,7 +8,6 @@ import {
   Building2,
   MapPin,
   Calendar,
-  Sparkles,
   Zap,
   Clock
 } from 'lucide-react'
@@ -33,7 +32,7 @@ export default async function FreelancerDashboard() {
     <div className="min-h-screen">
       {/* Pending Approval Banner */}
       {isPending && (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b-2 border-amber-200">
+        <div className="bg-linear-to-r from-amber-50 to-orange-50 border-b-2 border-amber-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
@@ -56,7 +55,7 @@ export default async function FreelancerDashboard() {
       )}
 
       {/* Hero Section - Mobile-First Design */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 text-white">
+      <section className="relative overflow-hidden bg-linear-to-br from-blue-600 via-blue-700 to-cyan-600 text-white">
         {/* Decorative Elements */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
@@ -133,13 +132,13 @@ export default async function FreelancerDashboard() {
                     <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer border-2 hover:border-blue-500 group">
                       <CardHeader>
                         <div className="flex items-start justify-between mb-2">
-                          <Badge className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
+                          <Badge className="bg-linear-to-r from-blue-600 to-cyan-600 text-white">
                             ₹{job.budget}
                           </Badge>
                           <div className="flex flex-wrap gap-1 justify-end">
                             {job.jobTypes.slice(0, 2).map((jobType) => (
                               <Badge key={jobType} variant="outline" className="text-xs">
-                                {getJobTypeLabel(jobType as any)}
+                                {getJobTypeLabel(jobType)}
                               </Badge>
                             ))}
                             {job.jobTypes.length > 2 && (

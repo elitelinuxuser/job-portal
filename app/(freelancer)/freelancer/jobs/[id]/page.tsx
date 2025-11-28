@@ -1,4 +1,4 @@
-import { getJobById, hasRespondedToJob, getMyJobResponse } from '@/lib/actions/freelancer'
+import { getJobById, hasRespondedToJob, getMyJobResponse, getFreelancerProfile } from '@/lib/actions/freelancer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { RespondToJobForm } from '@/components/freelancer/respond-to-job-form'
@@ -26,6 +26,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const job = await getJobById(id)
   const hasResponded = await hasRespondedToJob(id)
   const myResponse = hasResponded ? await getMyJobResponse(id) : null
+  const profile = await getFreelancerProfile()
+  const isVerified = profile?.verificationStatus === 'verified'
 
   if (!job) {
     notFound()
@@ -33,7 +35,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <>
-      <div className="max-w-5xl mx-auto pb-32 md:pb-6">
+      <div className="max-w-5xl mx-auto pb-16 md:py-6">
         <div className="px-0 sm:px-6 lg:px-8 space-y-6">
           {/* Header Card - Mobile Optimized */}
           <Card className="rounded-none sm:rounded-lg border-t-4 border-t-blue-600 border-x-0 sm:border-x shadow-none sm:shadow-lg">
@@ -59,7 +61,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 {job.jobTypes.map((jobType) => (
                   <Badge key={jobType} variant="secondary" className="px-3 py-1">
                     <Briefcase className="w-3 h-3 mr-1" />
-                    {getJobTypeLabel(jobType as any)}
+                    {getJobTypeLabel(jobType)}
                   </Badge>
                 ))}
                 <Badge variant="outline" className="px-3 py-1">
@@ -93,9 +95,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                     <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
                       <MapPin className="w-5 h-5 text-white" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-blue-700 font-medium">Location</p>
-                      <p className="font-semibold text-gray-900 truncate">{job.location}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-blue-700 font-medium">Location</p>
+                      <p className="font-semibold text-gray-900 text-sm wrap-break-word">{job.location}</p>
                     </div>
                   </div>
 
@@ -104,8 +106,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                       <IndianRupee className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs text-green-700 font-medium">Budget</p>
-                      <p className="font-semibold text-gray-900">₹{job.budget}</p>
+                      <p className="text-sm text-green-700 font-medium">Budget</p>
+                      <p className="font-semibold text-gray-900 text-sm">{job.budget}</p>
                     </div>
                   </div>
                 </div>
@@ -245,6 +247,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           budget: job.budget || '0'
         }} 
         hasResponded={hasResponded}
+        isVerified={isVerified}
         myResponse={myResponse ? {
           proposedPrice: myResponse.proposedPrice,
           message: myResponse.message,

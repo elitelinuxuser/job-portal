@@ -26,6 +26,8 @@ interface JobDetailsClientProps {
 export function JobDetailsClient({ job, hasResponded, isVerified, myResponse }: JobDetailsClientProps) {
   const [open, setOpen] = useState(false)
 
+  console.log(isVerified)
+
   return (
     <>
       {/* Sticky Bottom CTA - Mobile Only */}

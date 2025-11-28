@@ -32,7 +32,7 @@ export async function createFreelancerProfile(data: {
 
   try {
     // Check if user exists in database
-    let userExists = await db.query.users.findFirst({
+    const userExists = await db.query.users.findFirst({
       where: eq(users.id, userId),
     });
 
@@ -284,4 +284,116 @@ export async function getMyJobResponse(jobId: string) {
   });
 
   return response;
+}
+
+export async function getMyApplications() {
+  await requireRole("freelancer");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    return [];
+  }
+
+  const applications = await db.query.jobResponses.findMany({
+    where: eq(jobResponses.freelancerId, userId),
+    orderBy: (jobResponses, { desc }) => [desc(jobResponses.createdAt)],
+    with: {
+      job: {
+        with: {
+          company: {
+            with: {
+              companyProfile: true,
+            },
+          },
+          bookingRequests: {
+            where: eq(bookingRequests.freelancerId, userId),
+          },
+        },
+      },
+    },
+  });
+
+  return applications;
+}
+
+export async function getApplicationById(applicationId: string) {
+  await requireRole("freelancer");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    return null;
+  }
+
+  const application = await db.query.jobResponses.findFirst({
+    where: and(
+      eq(jobResponses.id, applicationId),
+      eq(jobResponses.freelancerId, userId)
+    ),
+    with: {
+      job: {
+        with: {
+          company: {
+            with: {
+              companyProfile: true,
+            },
+          },
+          bookingRequests: {
+            where: eq(bookingRequests.freelancerId, userId),
+          },
+        },
+      },
+    },
+  });
+
+  return application;
+}
+
+export async function withdrawApplication(responseId: string) {
+  await requireRole("freelancer");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Verify the application belongs to the freelancer
+  const application = await db.query.jobResponses.findFirst({
+    where: and(
+      eq(jobResponses.id, responseId),
+      eq(jobResponses.freelancerId, userId)
+    ),
+    with: {
+      job: {
+        with: {
+          bookingRequests: true,
+        },
+      },
+    },
+  });
+
+  if (!application) {
+    throw new Error("Application not found");
+  }
+
+  // Check if there's already a booking request for this application
+  const hasBooking = application.job.bookingRequests?.some(
+    (booking) => booking.freelancerId === userId
+  );
+
+  if (hasBooking) {
+    throw new Error(
+      "Cannot withdraw application - you have an active booking request for this job"
+    );
+  }
+
+  // Delete the application
+  await db.delete(jobResponses).where(eq(jobResponses.id, responseId));
+
+  revalidatePath("/freelancer/applications");
+  revalidatePath("/freelancer");
+
+  return { success: true };
 }

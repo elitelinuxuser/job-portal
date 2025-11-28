@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { JobFilters, FilterState } from './job-filters'
-import { getJobTypeLabel } from '@/lib/constants/job-types'
+import { getJobTypeLabel, JobType } from '@/lib/constants/job-types'
 import {
   Select,
   SelectContent,
@@ -29,7 +29,7 @@ interface Job {
   title: string
   description: string
   budget: string | null
-  jobTypes: string[]
+  jobTypes: JobType[]
   location: string
   locationCity?: string | null
   dates: Array<{ date: string; startTime?: string; endTime?: string }>
@@ -197,7 +197,7 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
                         <p className="font-medium text-gray-900 truncate">
                           {job.jobTypes.slice(0, 2).map((type, idx) => (
                             <span key={type}>
-                              {getJobTypeLabel(type as any)}
+                              {getJobTypeLabel(type)}
                               {idx < Math.min(job.jobTypes.length, 2) - 1 && ', '}
                             </span>
                           ))}
