@@ -38,6 +38,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 
 interface Application {
   id: string
@@ -132,6 +133,7 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
   const router = useRouter()
   const [withdrawing, setWithdrawing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   
   const status = getApplicationStatus(application)
   const StatusIcon = status.icon
@@ -152,7 +154,7 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto pb-16 md:py-6">
+    <div className="max-w-5xl mx-auto pb-20 md:pb-6 md:py-6">
       <div className="px-0 sm:px-6 lg:px-8 space-y-6">
         {/* Header Card */}
         <Card className="rounded-none sm:rounded-lg border-t-4 border-t-blue-600 border-x-0 sm:border-x shadow-none sm:shadow-lg">
@@ -182,24 +184,53 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-1">
                   {application.job.title}
                 </h1>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Building2 className="w-4 h-4 shrink-0" />
-                  <span className="font-medium">
-                    {application.job.company.companyProfile?.companyName || 'Company'}
-                  </span>
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Building2 className="w-4 h-4 shrink-0" />
+                    <span className="font-medium">
+                      {application.job.company.companyProfile?.companyName || 'Company'}
+                    </span>
+                  </div>
+                  
+                  {/* Job Type Badges */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {application.job.jobTypes.map((type) => (
+                      <Badge key={type} variant="secondary" className="px-3 py-1">
+                        <Briefcase className="w-3 h-3 mr-1" />
+                        {getJobTypeLabel(type)}
+                      </Badge>
+                    ))}
+                    {jobInactive && (
+                      <Badge variant="secondary" className="px-3 py-1">Closed</Badge>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {application.job.jobTypes.map((type) => (
-                <Badge key={type} variant="secondary" className="px-3 py-1">
-                  <Briefcase className="w-3 h-3 mr-1" />
-                  {getJobTypeLabel(type)}
-                </Badge>
-              ))}
-              {jobInactive && (
-                <Badge variant="secondary" className="px-3 py-1">Closed</Badge>
+            {/* Desktop Actions */}
+            <div className="hidden md:flex gap-3">
+              <Button
+                variant="default"
+                className="bg-blue-600 hover:bg-blue-700"
+                asChild
+              >
+                <Link href={`/freelancer/jobs/${application.job.id}`}>
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View Job Posting
+                </Link>
+              </Button>
+              
+              {canWithdraw && (
+                <Button
+                  variant="outline"
+                  className="border-2 border-cyan-600 text-cyan-700 hover:bg-blue-50"
+                  onClick={() => setConfirmOpen(true)}
+                  disabled={withdrawing}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {withdrawing ? 'Withdrawing...' : 'Withdraw Application'}
+                </Button>
               )}
             </div>
           </CardHeader>
@@ -208,7 +239,6 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
             {/* Job Description */}
             <div>
               <h2 className="font-semibold text-lg mb-3 text-gray-900 flex items-center gap-2">
-                <Award className="w-5 h-5 text-blue-600" />
                 Job Description
               </h2>
               <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
@@ -226,7 +256,7 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-blue-700 font-medium">Location</p>
-                    <p className="font-semibold text-gray-900 text-sm wrap-break-word">
+                    <p className="text-gray-900 text-sm wrap-break-word">
                       {application.job.location}
                     </p>
                   </div>
@@ -248,8 +278,7 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
 
             {/* Available Dates */}
             <div>
-              <h2 className="font-semibold text-lg mb-1 text-gray-900 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
+              <h2 className="font-semibold text-lg mb-2 text-gray-900 flex items-center gap-2">
                 Available Dates
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -273,7 +302,6 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
               application.job.contractSdCard) && (
               <div className="border-t pt-4">
                 <h2 className="font-semibold text-lg mb-2 text-gray-900 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-blue-600" />
                   Contract Terms
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-3">
@@ -319,93 +347,133 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
 
             {/* Application History */}
             <div className="border-t pt-4">
-              <h2 className="font-semibold text-lg mb-2 text-gray-900 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-blue-600" />
+              <h2 className="font-semibold text-lg mb-4 text-gray-900">
                 Application History
               </h2>
-              <div className="space-y-4">
-                {/* Application Submitted */}
-                <div className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shrink-0">
-                      <CheckCircle2 className="w-5 h-5 text-white" />
-                    </div>
-                    {application.job.bookingRequests.length > 0 && (
-                      <div className="w-0.5 h-full bg-gray-300 mt-2"></div>
-                    )}
-                  </div>
-                  <div className="flex-1 pb-4">
-                    <p className="font-semibold text-gray-900">Application Submitted</p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {format(new Date(application.createdAt), 'MMM d, yyyy \'at\' h:mm a')}
-                    </p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Your application was successfully submitted to {application.job.company.companyProfile?.companyName || 'the company'}
-                    </p>
-                  </div>
-                </div>
+              <div className="relative pl-8">
+                {/* Timeline vertical line */}
+                <div className="absolute left-3 top-3 bottom-3 w-0.5 bg-gray-200"></div>
 
-                {/* Booking Request Status */}
-                {application.job.bookingRequests.length > 0 && (
-                  <div className="flex gap-3">
-                    <div className="flex flex-col items-center">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                        status.color === 'amber' ? 'bg-amber-600' :
-                        status.color === 'green' ? 'bg-green-600' :
-                        status.color === 'red' ? 'bg-red-600' :
-                        'bg-purple-600'
-                      }`}>
-                        <StatusIcon className="w-5 h-5 text-white" />
+                <div className="space-y-4">
+                  {/* Application Submitted */}
+                  <div className="relative">
+                    {/* Timeline dot */}
+                    <div className="absolute -left-8 top-0">
+                      <div className="w-6 h-6 bg-blue-600 rounded-full border-4 border-white shadow-md flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
                       </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-900">{status.label}</p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {format(new Date(application.job.bookingRequests[0].createdAt), 'MMM d, yyyy \'at\' h:mm a')}
+                    
+                    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between gap-2 mb-0.5">
+                        <h3 className="font-semibold text-sm text-gray-900">Application Submitted</h3>
+                        <Badge variant="secondary" className="shrink-0 text-xs">Complete</Badge>
+                      </div>
+                      <p className="text-xs text-gray-500 mb-3 flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {format(new Date(application.createdAt), 'MMM d, yyyy \'at\' h:mm a')}
                       </p>
-                      <p className="text-sm text-gray-500 mt-2">{status.description}</p>
-                      
-                      {status.bookingId && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-3"
-                          asChild
-                        >
-                          <Link href="/freelancer/bookings">
-                            <ArrowRight className="w-4 h-4 mr-2" />
-                            View Booking Details
-                          </Link>
-                        </Button>
-                      )}
+                      <p className="text-xs text-gray-700">
+                        Your application was successfully submitted to <span className="font-medium text-gray-900">{application.job.company.companyProfile?.companyName || 'the company'}</span>
+                      </p>
                     </div>
                   </div>
-                )}
 
-                {/* Under Review State */}
-                {application.job.bookingRequests.length === 0 && (
-                  <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <Clock className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                    <p className="text-sm text-blue-800">
-                      {status.description}. You&apos;ll be notified if the company sends you a booking request.
-                    </p>
-                  </div>
-                )}
+                  {/* Booking Request Status */}
+                  {application.job.bookingRequests.length > 0 && (
+                    <div className="relative">
+                      {/* Timeline dot */}
+                      <div className="absolute -left-8 top-0">
+                        <div className={`w-6 h-6 rounded-full border-4 border-white shadow-md flex items-center justify-center ${
+                          status.color === 'amber' ? 'bg-amber-600' :
+                          status.color === 'green' ? 'bg-green-600' :
+                          status.color === 'red' ? 'bg-red-600' :
+                          'bg-purple-600'
+                        }`}>
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        </div>
+                      </div>
+                      
+                      <div className={`rounded-lg border p-4 hover:shadow-md transition-shadow ${
+                        status.color === 'amber' ? 'bg-amber-50 border-amber-200' :
+                        status.color === 'green' ? 'bg-green-50 border-green-200' :
+                        status.color === 'red' ? 'bg-red-50 border-red-200' :
+                        'bg-purple-50 border-purple-200'
+                      }`}>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h3 className="font-semibold text-base text-gray-900">{status.label}</h3>
+                          <Badge className={`shrink-0 text-xs ${
+                            status.color === 'amber' ? 'bg-amber-100 text-amber-800' :
+                            status.color === 'green' ? 'bg-green-100 text-green-800' :
+                            status.color === 'red' ? 'bg-red-100 text-red-800' :
+                            'bg-purple-100 text-purple-800'
+                          }`}>
+                            {status.color === 'green' ? 'Active' : status.color === 'amber' ? 'Pending' : 'Latest'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-3 flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {format(new Date(application.job.bookingRequests[0].createdAt), 'MMM d, yyyy \'at\' h:mm a')}
+                        </p>
+                        <p className="text-sm text-gray-700 mb-3">{status.description}</p>
+                        
+                        {status.bookingId && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 h-9"
+                            asChild
+                          >
+                            <Link href="/freelancer/bookings">
+                              View Booking Details
+                              <ArrowRight className="w-4 h-4 ml-2" />
+                            </Link>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Under Review State */}
+                  {application.job.bookingRequests.length === 0 && (
+                    <div className="relative">
+                      {/* Timeline dot - pulsing for active state */}
+                      <div className="absolute -left-8 top-0">
+                        <div className="relative">
+                          <div className="w-6 h-6 bg-blue-600 rounded-full border-4 border-white shadow-md flex items-center justify-center animate-pulse">
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          </div>
+                          <div className="absolute inset-0 w-6 h-6 bg-blue-400 rounded-full animate-ping opacity-75"></div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1">
+                            <p className="font-semibold text-blue-900 mb-1 text-sm">Under Review</p>
+                            <p className="text-xs text-blue-700">
+                              {status.description}. You&apos;ll be notified when the company sends you a booking request.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Your Application Details */}
             <div className="border-t pt-4">
               <h2 className="font-semibold text-lg mb-2 text-gray-900 flex items-center gap-2">
-                <Award className="w-5 h-5 text-blue-600" />
                 Your Application Details
               </h2>
               <div className="space-y-4">
                 {/* Your Proposed Budget */}
                 {application.proposedPrice && (
                   <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-sm font-medium text-amber-900 mb-1">Your Proposed Budget</p>
-                    <p className="text-2xl font-bold text-amber-800">{application.proposedPrice}</p>
+                    <p className="text-sm font-medium text-amber-900">Your Proposed Budget</p>
+                    <p className="text-lg font-bold text-amber-800">₹{application.proposedPrice}</p>
                   </div>
                 )}
 
@@ -421,59 +489,61 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="border-t pt-4">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1 sm:flex-initial"
-                  asChild
-                >
-                  <Link href={`/freelancer/jobs/${application.job.id}`}>
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    View Job Posting
-                  </Link>
-                </Button>
-                
-                {canWithdraw && (
-                  <Button
-                    variant="destructive"
-                    className="flex-1 sm:flex-initial"
-                    onClick={() => setConfirmOpen(true)}
-                    disabled={withdrawing}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {withdrawing ? 'Withdrawing...' : 'Withdraw Application'}
-                  </Button>
-                )}
+            {/* Info messages */}
+            {jobInactive && (
+              <div className="flex items-start gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-600">
+                  This job is no longer active. You cannot withdraw your application.
+                </p>
               </div>
+            )}
 
-              {/* Info messages */}
-              {jobInactive && (
-                <div className="flex items-start gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg mt-4">
-                  <AlertCircle className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
-                  <p className="text-sm text-gray-600">
-                    This job is no longer active. You cannot withdraw your application.
-                  </p>
-                </div>
-              )}
-
-              {!jobInactive && application.job.bookingRequests.length > 0 && (
-                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg mt-4">
-                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-sm text-amber-800">
-                    You cannot withdraw this application because a booking request has been sent. Please respond to the booking request or contact the company.
-                  </p>
-                </div>
-              )}
-            </div>
+            {!jobInactive && application.job.bookingRequests.length > 0 && (
+              <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-sm text-amber-800">
+                  You cannot withdraw this application because a booking request has been sent. Please respond to the booking request or contact the company.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Confirmation Dialog */}
+      {/* Sticky Bottom CTAs - Mobile Only */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
+        <div className="p-4">
+          <div className="flex gap-3">
+            {/* Primary CTA - View Job */}
+            <Button 
+              className="flex-1 h-12 text-base font-semibold bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-md"
+              asChild
+            >
+              <Link href={`/freelancer/jobs/${application.job.id}`}>
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View Job
+              </Link>
+            </Button>
+            
+            {/* Secondary CTA - Withdraw (if applicable) */}
+            {canWithdraw && (
+              <Button 
+                variant="outline"
+                className="h-12 px-6 text-base font-semibold border-2 border-cyan-600 text-cyan-700 hover:bg-blue-50"
+                onClick={() => setMobileSheetOpen(true)}
+                disabled={withdrawing}
+              >
+                {withdrawing ? 'Withdrawing...' : 'Withdraw'}
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Confirmation Dialog */}
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="hidden md:flex md:flex-col">
           <AlertDialogHeader>
             <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -491,6 +561,80 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Mobile Withdraw Bottom Sheet */}
+      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+        <SheetContent 
+          side="bottom" 
+          className="h-auto max-h-[92vh] px-0 pb-0 gap-0 pt-0 border-none rounded-t-3xl overflow-hidden md:hidden"
+          hideClose
+        >
+          {/* Warning Header */}
+          <div className="relative bg-linear-to-br from-red-600 via-red-500 to-rose-500 px-6 pt-6 pb-6">
+            <button
+              onClick={() => setMobileSheetOpen(false)}
+              className="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors z-20"
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="pr-12">
+              <div className="flex items-center gap-2 mb-3">
+                <Badge className="bg-white/20 backdrop-blur-sm text-white border-white/30 px-3 py-1">
+                  <AlertCircle className="w-3 h-3 mr-1" />
+                  Warning
+                </Badge>
+              </div>
+              
+              <SheetTitle className="text-2xl font-bold text-white mb-2">
+                Withdraw Application?
+              </SheetTitle>
+              
+              <SheetDescription className="text-red-50 text-base">
+                {application.job.title}
+              </SheetDescription>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 bg-white space-y-4">
+            <div className="flex items-start gap-3 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+              <AlertCircle className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-red-900 mb-1">This action cannot be undone</p>
+                <p className="text-sm text-red-800">
+                  You&apos;ll need to reapply if you change your mind. The company will be notified of your withdrawal.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <Button 
+                className="w-full h-12 text-base font-semibold bg-red-600 hover:bg-red-700 shadow-md"
+                onClick={async () => {
+                  await handleWithdraw()
+                  setMobileSheetOpen(false)
+                }}
+                disabled={withdrawing}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                {withdrawing ? 'Withdrawing...' : 'Withdraw Application'}
+              </Button>
+              <Button 
+                variant="outline"
+                className="w-full h-12 text-base font-semibold"
+                onClick={() => setMobileSheetOpen(false)}
+                disabled={withdrawing}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }

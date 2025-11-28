@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTitle, SheetDescription, SheetHeader } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { RespondToJobForm } from './respond-to-job-form'
 import { Badge } from '@/components/ui/badge'
-import { Briefcase, IndianRupee, Sparkles, X, Award, CheckCircle2, TrendingUp, AlertCircle, Clock } from 'lucide-react'
+import { Briefcase, IndianRupee, Sparkles, Award, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
 import Link from 'next/link'
 
 interface JobDetailsClientProps {
@@ -17,6 +17,7 @@ interface JobDetailsClientProps {
   hasResponded: boolean
   isVerified: boolean
   myResponse?: {
+    id: string
     proposedPrice: string | null
     message: string | null
     createdAt: Date
@@ -103,15 +104,15 @@ export function JobDetailsClient({ job, hasResponded, isVerified, myResponse }: 
               </div>
 
               {/* Application Details Content */}
-              <div className="px-6 pt-6 pb-6 bg-white space-y-4">
+              <div className="p-6 bg-white space-y-4">
                 {/* Proposed Budget */}
-                <div className="flex items-start gap-3 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+                <div className="flex items-center gap-3 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
                   <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center shrink-0">
                     <IndianRupee className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-green-700 font-medium mb-1">Your Proposed Budget</p>
-                    <p className="text-xl font-bold text-green-800">₹{myResponse.proposedPrice || job.budget}</p>
+                    <p className="text-sm text-green-700 font-medium">Your Proposed Budget</p>
+                    <p className="text-base font-bold text-green-800">{myResponse.proposedPrice || job.budget}</p>
                   </div>
                 </div>
 
@@ -128,12 +129,15 @@ export function JobDetailsClient({ job, hasResponded, isVerified, myResponse }: 
                   </div>
                 )}
 
-                <div className="pt-4">
+                <div className="pt-2">
                   <Button 
-                    className="w-full bg-gray-900 hover:bg-gray-800"
-                    onClick={() => setOpen(false)}
+                    className="w-full h-12 text-base font-semibold bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-md"
+                    asChild
                   >
-                    Close
+                    <Link href={`/freelancer/applications/${myResponse.id}`}>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      View Application Status
+                    </Link>
                   </Button>
                 </div>
               </div>

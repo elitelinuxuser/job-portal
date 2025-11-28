@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Building2, IndianRupee, Clock, CheckCheck, XCircle, Package, CheckCircle2, ArrowRight, Sparkles, FileText } from 'lucide-react'
+import { Building2, IndianRupee, Clock, CheckCheck, XCircle, Package, CheckCircle2, ArrowRight, Sparkles, FileText, Calendar } from 'lucide-react'
 import { format } from 'date-fns'
-import { JobType } from '@/lib/constants/job-types'
+import { getJobTypeLabel, JobType } from '@/lib/constants/job-types'
 import Link from 'next/link'
 
 interface Application {
@@ -81,10 +81,20 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
   
   // Separate applications
   const underReviewApps = applications.filter(isUnderReview)
-  const pastApps = applications.filter(app => !isUnderReview(app))
+  const closedApps = applications.filter(app => !isUnderReview(app))
   
-  const renderApplicationsList = (apps: Application[]) => {
-    if (apps.length === 0) {
+  // Calculate stats
+  const stats = useMemo(() => {
+    return { 
+      total: applications.length,
+      underReview: underReviewApps.length
+    }
+  }, [applications.length, underReviewApps.length])
+  
+  const displayedApps = activeTab === 'under-review' ? underReviewApps : closedApps
+  
+  const renderApplicationsList = () => {
+    if (displayedApps.length === 0) {
       return (
         <Card className="border-2 border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -92,12 +102,12 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
               <FileText className="w-8 h-8 text-blue-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {activeTab === 'under-review' ? 'No Active Applications' : 'No Past Applications'}
+              {activeTab === 'under-review' ? 'No Active Applications' : 'No Closed Applications'}
             </h3>
-            <p className="text-gray-600 text-center mb-6">
+            <p className="text-gray-600 text-center">
               {activeTab === 'under-review' 
                 ? "You don't have any applications currently under review." 
-                : "You don't have any past applications yet."}
+                : "You don't have any closed applications yet."}
             </p>
             {activeTab === 'under-review' && (
               <Link href="/freelancer">
@@ -113,58 +123,81 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
     }
     
     return (
-      <div className="grid gap-4">
-        {apps.map((application) => {
+      <div className="space-y-3">
+        {displayedApps.map((application) => {
           const statusBadge = getStatusBadge(application)
           const StatusIcon = statusBadge.icon
           
+          // Don't show status badge for under-review tab
+          const showStatusBadge = activeTab !== 'under-review'
+          
           return (
-            <Card key={application.id} className="hover:shadow-lg transition-all duration-300">
-              <CardContent className="pt-6">
+            <Card key={application.id} className="group hover:shadow-md transition-all duration-200 border-l-4" style={{ borderLeftColor: getStatusColor(statusBadge.label) }}>
+              <CardContent className="px-5">
                 <Link href={`/freelancer/applications/${application.id}`}>
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4">
                     {/* Left side - Job info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-lg text-gray-900 hover:text-blue-600 transition-colors mb-3 line-clamp-2">
-                        {application.job.title}
-                      </h3>
+                    <div className="flex-1 min-w-0 space-y-3">
+                      {/* Header row with title and optional status */}
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="font-semibold text-base text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 flex-1">
+                          {application.job.title}
+                        </h3>
+                        {showStatusBadge && (
+                          <Badge className={`${statusBadge.color} flex items-center gap-1.5 shrink-0 px-3 py-1`}>
+                            <StatusIcon className="w-3.5 h-3.5" />
+                            <span className="font-medium">{statusBadge.label}</span>
+                          </Badge>
+                        )}
+                      </div>
                       
-                      <div className="space-y-2">
+                      {/* Meta information grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                         {/* Company */}
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Building2 className="w-4 h-4 shrink-0" />
-                          <span className="truncate">
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Building2 className="w-4 h-4 shrink-0 text-gray-400" />
+                          <span className="truncate font-medium">
                             {application.job.company.companyProfile?.companyName || 'Company'}
                           </span>
                         </div>
                         
                         {/* Date Applied */}
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Clock className="w-4 h-4 shrink-0" />
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Calendar className="w-4 h-4 shrink-0 text-gray-400" />
                           <span>
-                            Applied {format(new Date(application.createdAt), 'MMM d, yyyy')}
+                            {format(new Date(application.createdAt), 'MMM d, yyyy')}
                           </span>
                         </div>
                         
                         {/* Proposed Amount */}
                         {application.proposedPrice && (
-                          <div className="flex items-center gap-2 text-sm text-green-700 font-medium">
+                          <div className="flex items-center gap-2 text-green-700 font-semibold">
                             <IndianRupee className="w-4 h-4 shrink-0" />
-                            <span>
-                              Proposed: {application.proposedPrice}
-                            </span>
+                            <span>{application.proposedPrice}</span>
                           </div>
                         )}
                       </div>
+                      
+                      {/* Job types */}
+                      {application.job.jobTypes.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {application.job.jobTypes.slice(0, 3).map((type) => (
+                            <span key={type} className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                              {getJobTypeLabel(type)}
+                            </span>
+                          ))}
+                          {application.job.jobTypes.length > 3 && (
+                            <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                              +{application.job.jobTypes.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     
-                    {/* Right side - Status */}
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <Badge className={`${statusBadge.color} flex items-center gap-1.5`}>
-                        <StatusIcon className="w-3 h-3" />
-                        {statusBadge.label}
-                      </Badge>
-                      <ArrowRight className="w-5 h-5 text-gray-400" />
+                    {/* Right side - View details arrow */}
+                    <div className="shrink-0 pt-1">
+                      <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                     </div>
                   </div>
                 </Link>
@@ -176,12 +209,37 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
     )
   }
 
-  const filteredApps = activeTab === 'under-review' ? underReviewApps : pastApps
-  
   return (
-    <div className="w-full">
+    <div className="w-full space-y-6">
+      {/* Stats Dashboard */}
+      <div className="grid grid-cols-2 gap-4">
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardContent className='px-4'>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-blue-600 mb-1">Total Applications</p>
+                <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
+              </div>
+              <FileText className="w-8 h-8 text-blue-600 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-amber-200 bg-amber-50/50">
+          <CardContent className='px-4'>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-amber-600 mb-1">Under Review</p>
+                <p className="text-2xl font-bold text-amber-900">{stats.underReview}</p>
+              </div>
+              <Clock className="w-8 h-8 text-amber-600 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
       {/* Custom Pills Navigation */}
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="flex flex-wrap gap-3">
         <button
           onClick={() => setActiveTab('under-review')}
           className={`px-4 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
@@ -190,7 +248,7 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          <span>Under Review</span>
+          <span className='text-sm'>Under Review</span>
           <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
             activeTab === 'under-review' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
           }`}>
@@ -199,26 +257,46 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
         </button>
 
         <button
-          onClick={() => setActiveTab('past')}
+          onClick={() => setActiveTab('closed')}
           className={`px-4 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
-            activeTab === 'past'
+            activeTab === 'closed'
               ? 'bg-gray-700 text-white shadow-lg shadow-gray-700/30'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          <span>Past</span>
+          <span className='text-sm'>Closed</span>
           <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-            activeTab === 'past' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+            activeTab === 'closed' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
           }`}>
-            {pastApps.length}
+            {closedApps.length}
           </span>
         </button>
       </div>
 
       {/* Content */}
       <div>
-        {renderApplicationsList(filteredApps)}
+        {renderApplicationsList()}
       </div>
     </div>
   )
+}
+
+// Helper function to get status colors
+function getStatusColor(label: string): string {
+  switch (label) {
+    case 'Under Review':
+      return '#3b82f6' // blue
+    case 'Booking Sent':
+      return '#f59e0b' // amber
+    case 'Accepted':
+      return '#10b981' // green
+    case 'Declined':
+      return '#ef4444' // red
+    case 'Completed':
+      return '#8b5cf6' // purple
+    case 'Job Closed':
+      return '#6b7280' // gray
+    default:
+      return '#6b7280'
+  }
 }

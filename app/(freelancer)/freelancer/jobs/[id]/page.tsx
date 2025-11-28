@@ -249,6 +249,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         hasResponded={hasResponded}
         isVerified={isVerified}
         myResponse={myResponse ? {
+          id: myResponse.id,
           proposedPrice: myResponse.proposedPrice,
           message: myResponse.message,
           createdAt: myResponse.createdAt
