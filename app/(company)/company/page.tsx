@@ -11,7 +11,7 @@ import {
   FileText
 } from 'lucide-react'
 import { redirect } from 'next/navigation'
-import { JobsListWithTabs } from '@/components/company/jobs-list-with-tabs'
+import { Job, JobsListWithTabs } from '@/components/company/jobs-list-with-tabs'
 
 export default async function CompanyDashboard() {
   const profile = await getCompanyProfile()
@@ -52,7 +52,7 @@ export default async function CompanyDashboard() {
             </div>
             <Link href="/company/post-job">
               <Button size="lg" className="bg-white text-indigo-600 hover:bg-indigo-50 shadow-lg">
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus className="w-5 h-5" />
                 Post New Job
               </Button>
             </Link>
@@ -64,7 +64,7 @@ export default async function CompanyDashboard() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 mb-8">
         <div className="grid md:grid-cols-3 gap-6">
           <Card className="border-2 shadow-lg">
-            <CardContent className="pt-6">
+            <CardContent>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 font-medium">Total Jobs</p>
@@ -78,7 +78,7 @@ export default async function CompanyDashboard() {
           </Card>
           
           <Card className="border-2 shadow-lg">
-            <CardContent className="pt-6">
+            <CardContent>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 font-medium">Active Jobs</p>
@@ -92,7 +92,7 @@ export default async function CompanyDashboard() {
           </Card>
           
           <Card className="border-2 shadow-lg">
-            <CardContent className="pt-6">
+            <CardContent>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 font-medium">Total Responses</p>
@@ -114,7 +114,7 @@ export default async function CompanyDashboard() {
           <p className="text-gray-600 mt-1">Manage and track your listings</p>
         </div>
 
-        <JobsListWithTabs jobs={jobs as any} />
+        <JobsListWithTabs jobs={jobs as unknown as Job[]} />
       </section>
     </div>
   )

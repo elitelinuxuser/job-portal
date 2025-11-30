@@ -22,17 +22,17 @@ import {
   Eye
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { getJobTypeLabel } from '@/lib/constants/job-types'
+import { getJobTypeLabel, JobType } from '@/lib/constants/job-types'
 import { toggleJobStatus } from '@/lib/actions/jobs'
 import { toast } from 'sonner'
 
-interface Job {
+export interface Job {
   id: string
   title: string
   description: string
   location: string
   budget: string
-  jobType: string
+  jobType: JobType
   dates: Array<{ date: string; startTime?: string; endTime?: string }>
   isActive: boolean
   status: 'active' | 'completed' | 'cancelled' | 'booked'
@@ -185,7 +185,7 @@ export function JobsListWithTabs({ jobs }: JobsListWithTabsProps) {
                     >
                       {job.isActive ? 'Active' : 'Inactive'}
                     </Badge>
-                    <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold px-3 py-1 text-xs whitespace-nowrap">
+                    <Badge className="bg-linear-to-r from-green-600 to-emerald-600 text-white font-bold px-3 py-1 text-xs whitespace-nowrap">
                       ₹{parseFloat(job.budget).toLocaleString('en-IN')}
                     </Badge>
                   </div>
@@ -211,7 +211,7 @@ export function JobsListWithTabs({ jobs }: JobsListWithTabsProps) {
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs text-gray-500">Type</p>
-                            <p className="font-medium text-gray-900 truncate">{getJobTypeLabel(job.jobType as any)}</p>
+                            <p className="font-medium text-gray-900 truncate">{getJobTypeLabel(job.jobType)}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 text-sm">
@@ -238,7 +238,7 @@ export function JobsListWithTabs({ jobs }: JobsListWithTabsProps) {
                         </div>
                         <div className="flex gap-2">
                           <Link href={`/company/jobs/${job.id}`} className="flex-1">
-                            <Button className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+                            <Button className="w-full bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
                               <ArrowRight className="w-4 h-4 mr-2" />
                               View Details
                             </Button>

@@ -36,17 +36,19 @@ interface ResponsesListProps {
 
 export function ResponsesList({ responses }: ResponsesListProps) {
   const [selectedResponse, setSelectedResponse] = useState<JobResponseWithRelations | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false) // For mobile sheet
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all')
 
   const unreadResponses = responses.filter(r => !r.viewedAt)
   const displayedResponses = activeTab === 'unread' ? unreadResponses : responses
 
-  const openResponseDetails = async (response: JobResponseWithRelations) => {
+  const openResponseDetails = async (response: JobResponseWithRelations, isMobile: boolean = false) => {
     setSelectedResponse(response)
-    setIsDialogOpen(true)
+    if (isMobile) {
+      setIsDialogOpen(true)
+    }
     
-    // Mark as viewed when opening the dialog
+    // Mark as viewed when opening
     if (!response.viewedAt) {
       await markResponseAsViewed(response.id)
     }
@@ -109,21 +111,25 @@ export function ResponsesList({ responses }: ResponsesListProps) {
         </div>
       </div>
 
-      {displayedResponses.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 mx-auto">
-            <MessageSquare className="w-8 h-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            No Unread Responses
-          </h3>
-          <p className="text-gray-600">
-            All responses have been viewed
-          </p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          {displayedResponses.map((response, index) => {
+      {/* Desktop: Split Layout | Mobile: List Only */}
+      <div className="flex gap-4 h-[calc(100vh-300px)] min-h-[600px]">
+        {/* Left Panel: Responses List */}
+        <div className="w-full lg:w-96 flex flex-col shrink-0">
+          {displayedResponses.length === 0 ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <MessageSquare className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No Unread Responses
+              </h3>
+              <p className="text-gray-600">
+                All responses have been viewed
+              </p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden flex-1 overflow-y-auto">
+              {displayedResponses.map((response, index) => {
             const isUnread = !response.viewedAt
             
             return (
@@ -133,15 +139,33 @@ export function ResponsesList({ responses }: ResponsesListProps) {
                   isUnread 
                     ? 'bg-white border-l-indigo-600 hover:bg-indigo-50/50' 
                     : 'bg-gray-50/50 border-l-transparent hover:bg-gray-100/50'
-                } ${index !== displayedResponses.length - 1 ? 'border-b border-gray-200' : ''}`}
-                onClick={() => openResponseDetails(response)}
+                } ${selectedResponse?.id === response.id ? 'bg-indigo-50 border-l-indigo-600' : ''}
+                ${index !== displayedResponses.length - 1 ? 'border-b border-gray-200' : ''}`}
+                onClick={() => {
+                  // Desktop: just select, Mobile: open sheet
+                  const isMobile = window.innerWidth < 1024
+                  openResponseDetails(response, isMobile)
+                }}
               >
                 <div className="px-4 py-4">
                   {/* Header - Freelancer and Job */}
                   <div className="flex items-start gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold shrink-0 text-sm">
-                      {(response.freelancer.freelancerProfile?.name || 'F').charAt(0).toUpperCase()}
-                    </div>
+                    {/* Profile Photo or Initial */}
+                    {response.freelancer.freelancerProfile?.photoUrl ? (
+                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shrink-0">
+                        <Image
+                          src={response.freelancer.freelancerProfile.photoUrl}
+                          alt={response.freelancer.freelancerProfile.name || 'Freelancer'}
+                          width={40}
+                          height={40}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold shrink-0 text-sm">
+                        {(response.freelancer.freelancerProfile?.name || 'F').charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-2 mb-0.5">
                         <h3 className={`truncate ${
@@ -184,10 +208,209 @@ export function ResponsesList({ responses }: ResponsesListProps) {
               </div>
             )
           })}
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Response Details Sheet - Bottom sheet on mobile, side panel on desktop */}
+        {/* Right Panel: Response Details (Desktop Only) */}
+        <div className="hidden lg:flex flex-1 flex-col bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {!selectedResponse ? (
+            /* Empty State */
+            <div className="flex-1 flex flex-col items-center justify-center p-12">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <MessageSquare className="w-10 h-10 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Select a response
+              </h3>
+              <p className="text-gray-600 text-center max-w-sm">
+                Choose a freelancer response from the list to view details and send booking requests
+              </p>
+            </div>
+          ) : (
+            /* Response Details Content */
+            <>
+              {/* Gradient Header - Compact */}
+              <div className="relative bg-linear-to-br from-indigo-600 via-purple-600 to-pink-600 px-6 pt-5 pb-5 shrink-0">
+                <div className="pr-12">
+                  {/* Photo and Name Side by Side */}
+                  <div className="flex items-center gap-3 mb-3">
+                    {/* Profile Photo or Initial - Clickable */}
+                    <Link href={`/freelancer/profile/${selectedResponse.freelancerId}`}>
+                      {selectedResponse.freelancer.freelancerProfile?.photoUrl ? (
+                        <div className="w-18 h-18 rounded-full overflow-hidden border-3 border-white/20 backdrop-blur-sm shrink-0 hover:border-white/40 transition-all cursor-pointer">
+                          <Image
+                            src={selectedResponse.freelancer.freelancerProfile.photoUrl}
+                            alt={selectedResponse.freelancer.freelancerProfile.name || 'Freelancer'}
+                            width={72}
+                            height={72}
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-3 border-white/10 shrink-0 hover:bg-white/30 transition-all cursor-pointer">
+                          <User className="w-7 h-7 text-white" />
+                        </div>
+                      )}
+                    </Link>
+                    
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/freelancer/profile/${selectedResponse.freelancerId}`}>
+                        <h2 className="text-xl font-bold text-white mb-1 hover:text-white/90 transition-colors cursor-pointer flex items-center gap-2">
+                          {selectedResponse.freelancer.freelancerProfile?.name || 'Freelancer'}
+                          <ExternalLink className="w-4 h-4 opacity-70" />
+                        </h2>
+                      </Link>
+                      {selectedResponse.freelancer.freelancerProfile?.verificationStatus === 'verified' && (
+                        <Badge className="bg-white/20 backdrop-blur-sm text-white border-white/30 px-2.5 py-0.5 text-xs">
+                          <Shield className="w-3 h-3 mr-1" />
+                          Verified
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <p className="text-white/90 text-sm">
+                    Response for: <Link 
+                      href={`/company/jobs/${selectedResponse.job.id}`}
+                      className="underline hover:text-white font-medium transition-colors"
+                    >
+                      {selectedResponse.job.title}
+                    </Link>
+                  </p>
+                </div>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto px-6 pt-6 pb-6 bg-white space-y-6">
+                {/* Rest of the content will be added */}
+                {selectedResponse.proposedPrice && (
+                  <div className="p-3 bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center shrink-0">
+                        <IndianRupee className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-green-700 font-medium mb-0.5">Proposed Price</p>
+                        <p className="font-bold text-green-900">{selectedResponse.proposedPrice}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedResponse.message && (
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      Message
+                    </h3>
+                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{selectedResponse.message}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 mb-3">Contact Information</h3>
+                  <div className="grid grid-cols-1 gap-3">
+                    {selectedResponse.freelancer.freelancerProfile?.location && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0">
+                          <MapPin className="w-5 h-5 text-indigo-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-600 mb-0.5">Location</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {selectedResponse.freelancer.freelancerProfile.location}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedResponse.freelancer.freelancerProfile?.whatsappNumber && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
+                          <Phone className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-600 mb-0.5">WhatsApp</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {selectedResponse.freelancer.freelancerProfile.whatsappNumber}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {selectedResponse.freelancer.freelancerProfile?.equipmentList && 
+                 (selectedResponse.freelancer.freelancerProfile.equipmentList as string[]).length > 0 && (
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      Equipment
+                    </h3>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      {(selectedResponse.freelancer.freelancerProfile.equipmentList as string[]).map((item, idx) => (
+                        <Badge key={idx} variant="secondary" className="px-3 py-1.5 bg-purple-50 text-purple-700 border border-purple-200">
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedResponse.freelancer.freelancerProfile?.portfolioLinks &&
+                 (selectedResponse.freelancer.freelancerProfile.portfolioLinks as string[]).length > 0 && (
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      Portfolio
+                    </h3>
+                    <div className="space-y-2">
+                      {(selectedResponse.freelancer.freelancerProfile.portfolioLinks as string[]).map((link, idx) => (
+                        <a
+                          key={idx}
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 p-3 bg-linear-to-r from-cyan-50 to-blue-50 hover:from-cyan-100 hover:to-blue-100 rounded-xl border border-cyan-200 hover:border-cyan-300 transition-all group"
+                        >
+                          <div className="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center shrink-0">
+                            <Award className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900">Portfolio {idx + 1}</p>
+                            <p className="text-xs text-gray-600 truncate">{link}</p>
+                          </div>
+                          <ExternalLink className="w-4 h-4 text-cyan-600 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 text-xs text-gray-500 pt-4 border-t">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Received on {format(new Date(selectedResponse.createdAt), 'MMM d, yyyy \'at\' h:mm a')}</span>
+                </div>
+              </div>
+
+              {/* Bottom CTA */}
+              <div className="border-t bg-white px-6 py-4 shrink-0">
+                <SendBookingRequest
+                  jobId={selectedResponse.job.id}
+                  freelancerId={selectedResponse.freelancerId}
+                  freelancerName={selectedResponse.freelancer.freelancerProfile?.name || 'Freelancer'}
+                  bookingRequest={selectedResponse.bookingRequest}
+                  jobBudget={typeof selectedResponse.job.budget === 'number' ? selectedResponse.job.budget : parseFloat(selectedResponse.job.budget || '0') || 0}
+                  proposedPrice={selectedResponse.proposedPrice ? parseFloat(selectedResponse.proposedPrice) : undefined}
+                  className="w-full h-12 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-base font-semibold shadow-md"
+                />
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Sheet - Bottom sheet on mobile only */}
       <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <SheetContent 
           side="bottom" 
@@ -378,6 +601,8 @@ export function ResponsesList({ responses }: ResponsesListProps) {
                   freelancerId={selectedResponse.freelancerId}
                   freelancerName={selectedResponse.freelancer.freelancerProfile?.name || 'Freelancer'}
                   bookingRequest={selectedResponse.bookingRequest}
+                  jobBudget={typeof selectedResponse.job.budget === 'number' ? selectedResponse.job.budget : parseFloat(selectedResponse.job.budget || '0') || 0}
+                  proposedPrice={selectedResponse.proposedPrice ? parseFloat(selectedResponse.proposedPrice) : undefined}
                   className="w-full h-12 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-base font-semibold shadow-md"
                 />
               </div>

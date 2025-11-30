@@ -87,7 +87,7 @@ export function CompanyNav() {
             <div className="hidden md:flex items-center space-x-3">
               <Link href="/company/post-job">
                 <Button className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200">
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4" />
                   Post Job
                 </Button>
               </Link>

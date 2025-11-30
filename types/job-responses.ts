@@ -63,8 +63,10 @@ export interface BookingRequest {
   companyId: string;
   freelancerId: string;
   status: "pending" | "accepted" | "rejected";
+  rejectionReason?: string | null;
   createdAt: Date;
   updatedAt: Date;
+  contractDetails?: any;
 }
 
 // Job Response

@@ -176,6 +176,8 @@ export async function getJobResponses(jobId: string) {
 export async function createBookingRequest(data: {
   jobId: string;
   freelancerId: string;
+  customBudget?: number;
+  proposedPrice?: number;
 }) {
   await requireRole("company");
 
@@ -209,13 +211,16 @@ export async function createBookingRequest(data: {
     };
   }
 
+  // Determine budget: customBudget > proposedPrice > job.budget
+  const finalBudget = data.customBudget ?? data.proposedPrice ?? job.budget;
+
   // Create contract details object
   const contractDetails = {
     title: job.title,
     description: job.description,
     dates: job.dates,
     location: job.location,
-    budget: job.budget,
+    budget: finalBudget,
     jobTypes: job.jobTypes,
     contractContentPosting: job.contractContentPosting,
     contractAdvancePayment: job.contractAdvancePayment,
@@ -252,6 +257,64 @@ export async function createBookingRequest(data: {
   revalidatePath("/freelancer");
 
   return { success: true, booking };
+}
+
+export async function updateBookingRequest(data: {
+  bookingId: string;
+  customBudget: number;
+}) {
+  await requireRole("company");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Get existing booking request
+  const existingBooking = await db.query.bookingRequests.findFirst({
+    where: and(
+      eq(bookingRequests.id, data.bookingId),
+      eq(bookingRequests.companyId, userId)
+    ),
+  });
+
+  if (!existingBooking) {
+    return {
+      success: false,
+      error: "Booking request not found",
+    };
+  }
+
+  // Only allow updating pending bookings
+  if (existingBooking.status !== "pending") {
+    return {
+      success: false,
+      error: "Can only update pending booking requests",
+    };
+  }
+
+  // Update contract details with new budget
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updatedContractDetails = {
+    ...(existingBooking.contractDetails as any),
+    budget: data.customBudget,
+  };
+
+  // Update the booking request
+  const [updatedBooking] = await db
+    .update(bookingRequests)
+    .set({
+      contractDetails: updatedContractDetails,
+      updatedAt: new Date(),
+    })
+    .where(eq(bookingRequests.id, data.bookingId))
+    .returning();
+
+  revalidatePath("/company/responses");
+  revalidatePath("/company");
+
+  return { success: true, booking: updatedBooking };
 }
 
 export async function getCompanyBookings() {

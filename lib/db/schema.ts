@@ -211,6 +211,7 @@ export const bookingRequests = pgTable("booking_requests", {
     .references(() => users.id),
   status: bookingStatusEnum("status").notNull().default("pending"),
   contractDetails: jsonb("contract_details").notNull(),
+  rejectionReason: text("rejection_reason"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
