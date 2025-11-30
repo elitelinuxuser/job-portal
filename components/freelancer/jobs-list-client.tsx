@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { JobFilters, FilterState } from './job-filters'
-import { getJobTypeLabel, JobType } from '@/lib/constants/job-types'
+import { getJobTypeLabel } from '@/lib/constants/job-types'
 import {
   Select,
   SelectContent,
@@ -23,34 +23,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-
-interface Job {
-  id: string
-  title: string
-  description: string
-  budget: string | null
-  jobTypes: JobType[]
-  location: string
-  locationCity?: string | null
-  dates: Array<{ date: string; startTime?: string; endTime?: string }>
-  createdAt: string | Date
-  company: {
-    companyProfile?: {
-      companyName?: string
-    }
-  }
-}
+import { JobPost } from '@/types/job-responses'
 
 interface JobsListClientProps {
-  initialJobs: Job[]
+  initialJobs: JobPost[]
 }
 
 export function JobsListClient({ initialJobs }: JobsListClientProps) {
-  const [filteredJobs, setFilteredJobs] = useState<Job[]>(initialJobs)
+  const [filteredJobs, setFilteredJobs] = useState<JobPost[]>(initialJobs)
   const [currentFilters, setCurrentFilters] = useState<FilterState | null>(null)
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set())
 
-  const handleFilterChange = (filters: FilterState, filtered: Job[]) => {
+  console.log("Current Filters: ", currentFilters);
+  console.log("Filtered Jobs: ", filteredJobs);
+
+  const handleFilterChange = (filters: FilterState, filtered: JobPost[]) => {
     setCurrentFilters(filters)
     setFilteredJobs(filtered)
   }
@@ -167,7 +154,7 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
                       </div>
                     <CardDescription className="flex items-center gap-2">
                       <Building2 className="w-4 h-4" />
-                      <span>{job.company.companyProfile?.companyName || 'Company'}</span>
+                      <span>{job.company?.companyProfile?.companyName || 'Company'}</span>
                     </CardDescription>
                     <p className="text-gray-600 line-clamp-2 mt-3">{job.description}</p>
                   </div>
@@ -220,7 +207,7 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
                     <div className="text-sm text-gray-500">
                       Posted {format(new Date(job.createdAt), 'MMM d, yyyy')}
                     </div>
-                    <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+                    <Button className="bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
                       View Details
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>

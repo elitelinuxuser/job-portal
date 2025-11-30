@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,21 +31,19 @@ import {
 import { cn } from '@/lib/utils'
 import { JOB_TYPE_OPTIONS, JobType, getJobTypeLabel } from '@/lib/constants/job-types'
 import { LocationAutocomplete, LocationData } from '@/components/shared/location-autocomplete'
-import { Job } from '@/lib/actions/jobs'
+import { JobPost } from '@/types/job-responses'
 
 export interface FilterState {
   search: string
-  locationSearch: string
+  location: {
+    city: string;
+    state: string;
+    country: string;
+  }
   jobTypes: JobType[]
   minBudget: string
   maxBudget: string
   sortBy: 'recent' | 'budget-high' | 'budget-low' | 'dates'
-}
-
-interface JobPost extends Job {
-  company?: any;
-  createdAt: string;
-  updatedAt: string;
 }
 
 interface JobFiltersProps {
@@ -57,7 +55,11 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [filters, setFilters] = useState<FilterState>({
     search: '',
-    locationSearch: '',
+    location: {
+      city: '',
+      state: '',
+      country: ''
+    },
     jobTypes: [],
     minBudget: '',
     maxBudget: '',
@@ -67,8 +69,8 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
   // Use predefined job types for filter options
   const allJobTypes = JOB_TYPE_OPTIONS
 
-  // Apply filters
-  useEffect(() => {
+  // Apply filters using useMemo for better performance and predictability
+  const filteredJobs = useMemo(() => {
     let filtered = [...jobs]
 
     // Search filter
@@ -77,16 +79,19 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
       filtered = filtered.filter(job => 
         job.title.toLowerCase().includes(searchLower) ||
         job.description.toLowerCase().includes(searchLower) ||
-        job.company.companyProfile?.companyName?.toLowerCase().includes(searchLower)
+        job.company?.companyProfile?.companyName?.toLowerCase().includes(searchLower)
       )
     }
 
     // Location filter (search by city/location text)
-    if (filters.locationSearch) {
-      const locationLower = filters.locationSearch.toLowerCase()
+    if (filters.location.city || filters.location.state || filters.location.country) {
+      const city = filters.location.city.toLowerCase();
+      const state = filters.location.state.toLowerCase();
+      const country = filters.location.country.toLowerCase();
       filtered = filtered.filter(job => 
-        job.location.toLowerCase().includes(locationLower) ||
-        job.locationCity?.toLowerCase().includes(locationLower)
+        (city ? job.locationCity?.toLowerCase().includes(city) : true) &&
+        (state ? job.locationState?.toLowerCase().includes(state) : true) &&
+        (country ? job.locationCountry?.toLowerCase().includes(country) : true)
       )
     }
 
@@ -123,9 +128,13 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
         filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     }
 
-    onFilterChange(filters, filtered)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return filtered
   }, [filters, jobs])
+
+  // Notify parent of filter changes
+  useEffect(() => {
+    onFilterChange(filters, filteredJobs)
+  }, [filters, filteredJobs, onFilterChange])
 
   // No longer needed - using text search instead
   // const handleLocationToggle = (location: string) => {
@@ -147,24 +156,36 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
   }
 
   const clearAllFilters = () => {
-    setFilters({
+    const initialFilters: FilterState = {
       search: '',
-      locationSearch: '',
+      location: {
+        city: "",
+        state: "",
+        country: ""
+      },
       jobTypes: [],
       minBudget: '',
       maxBudget: '',
       sortBy: 'recent'
-    })
+    };
+    setFilters(initialFilters)
   }
 
   const activeFilterCount = 
-    (filters.locationSearch ? 1 : 0) +
+    (filters.location.city || filters.location.state || filters.location.country ? 1 : 0) +
     (filters.jobTypes.length > 0 ? 1 : 0) +
     (filters.minBudget || filters.maxBudget ? 1 : 0)
 
   const removeFilterChip = (type: 'location' | 'jobType' | 'budget', value?: string) => {
     if (type === 'location') {
-      setFilters(prev => ({ ...prev, locationSearch: '' }))
+      setFilters(prev => ({ 
+        ...prev, 
+        location: {
+          city: '',
+          state: '',
+          country: ''
+        }
+      }))
     } else if (type === 'jobType' && value) {
       handleJobTypeToggle(value as JobType)
     } else if (type === 'budget') {
@@ -246,13 +267,19 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
                   <Label className="text-base font-semibold">Location</Label>
                 </div>
                 <LocationAutocomplete
-                  value={filters.locationSearch}
+                  value={filters.location.city}
                   onChange={(locationData: LocationData) => {
                     // Store the city name for filtering
+                    if (locationData.city && locationData.state && locationData.country) {
                     setFilters(prev => ({ 
                       ...prev, 
-                      locationSearch: locationData.formatted 
+                      location: {
+                        city: locationData.city as string,
+                        state: locationData.state as string,
+                        country: locationData.country as string
+                      } 
                     }))
+                  }
                   }}
                   placeholder="Search by city..."
                   restrictToCities={true}
@@ -374,18 +401,18 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
       </div>
 
       {/* Active Filter Chips */}
-      {(filters.locationSearch || filters.jobTypes.length > 0 || filters.minBudget || filters.maxBudget) && (
+      {(filters.location.city || filters.jobTypes.length > 0 || filters.minBudget || filters.maxBudget) && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-gray-600">Active filters:</span>
           
-          {filters.locationSearch && (
+          {filters.location.city && (
             <Badge 
               variant="secondary" 
               className="gap-1 pr-1 pl-3 py-1.5 cursor-pointer hover:bg-gray-200"
               onClick={() => removeFilterChip('location')}
             >
               <MapPin className="w-3 h-3" />
-              {filters.locationSearch}
+              {filters.location.city}
               <X className="w-3 h-3 ml-1" />
             </Badge>
           )}

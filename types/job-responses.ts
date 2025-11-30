@@ -48,6 +48,11 @@ export interface JobPost {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  company?: {
+    companyProfile?: {
+      companyName?: string;
+    };
+  };
 }
 
 // Job Response
