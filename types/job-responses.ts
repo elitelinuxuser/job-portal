@@ -6,6 +6,7 @@ export interface FreelancerProfile {
   userId: string;
   name: string;
   location: string;
+  photoUrl: string | null;
   whatsappNumber: string;
   verificationStatus: "pending" | "verified" | "rejected";
   equipmentList: string[] | null;
@@ -55,6 +56,17 @@ export interface JobPost {
   };
 }
 
+// Booking Request
+export interface BookingRequest {
+  id: string;
+  jobId: string;
+  companyId: string;
+  freelancerId: string;
+  status: "pending" | "accepted" | "rejected";
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Job Response
 export interface JobResponse {
   id: string;
@@ -71,6 +83,7 @@ export interface JobResponse {
 export interface JobResponseWithRelations extends JobResponse {
   freelancer: FreelancerUser;
   job: JobPost;
+  bookingRequest?: BookingRequest | null;
 }
 
 // Company Job with responses

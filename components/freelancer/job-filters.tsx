@@ -248,7 +248,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
                   </div>
                 </div>
                 
-                <SheetTitle className="text-2xl font-bold text-white mb-2">
+                <SheetTitle className="text-2xl font-bold text-white mb-1">
                   Filters
                 </SheetTitle>
                 

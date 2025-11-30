@@ -83,7 +83,34 @@ export async function getCompanyJobs() {
     },
   });
 
-  return jobs;
+  // For each job, fetch booking requests and attach them to responses
+  const jobsWithBookingRequests = await Promise.all(
+    jobs.map(async (job) => {
+      const responsesWithBookings = await Promise.all(
+        job.responses.map(async (response) => {
+          // Find booking request for this job and freelancer
+          const bookingRequest = await db.query.bookingRequests.findFirst({
+            where: and(
+              eq(bookingRequests.jobId, job.id),
+              eq(bookingRequests.freelancerId, response.freelancerId)
+            ),
+          });
+
+          return {
+            ...response,
+            bookingRequest: bookingRequest || null,
+          };
+        })
+      );
+
+      return {
+        ...job,
+        responses: responsesWithBookings,
+      };
+    })
+  );
+
+  return jobsWithBookingRequests;
 }
 
 export async function getJobPostById(jobId: string) {
@@ -165,6 +192,21 @@ export async function createBookingRequest(data: {
 
   if (!job) {
     throw new Error("Job not found");
+  }
+
+  // Check if booking request already exists
+  const existingBooking = await db.query.bookingRequests.findFirst({
+    where: and(
+      eq(bookingRequests.jobId, data.jobId),
+      eq(bookingRequests.freelancerId, data.freelancerId)
+    ),
+  });
+
+  if (existingBooking) {
+    return {
+      success: false,
+      error: "Booking request already exists for this freelancer",
+    };
   }
 
   // Create contract details object

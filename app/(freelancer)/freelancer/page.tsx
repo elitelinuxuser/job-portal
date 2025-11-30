@@ -177,8 +177,8 @@ export default async function FreelancerDashboard() {
 
       {/* All Jobs with Advanced Filtering */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <div className="mb-6 md:mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">All Jobs</h2>
+        <div className="mb-4 md:mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">All Jobs</h2>
           <p className="text-sm md:text-base text-gray-600">Browse and filter available opportunities</p>
         </div>
 

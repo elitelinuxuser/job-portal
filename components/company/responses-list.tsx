@@ -3,8 +3,12 @@
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { 
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { SendBookingRequest } from '@/components/company/send-booking-request'
 import { 
   IndianRupee, 
@@ -16,10 +20,13 @@ import {
   Phone,
   Shield,
   ExternalLink,
-  FileText
+  FileText,
+  Award,
+  X
 } from 'lucide-react'
 import { format } from 'date-fns'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { JobResponseWithRelations } from '@/types/job-responses'
 import { markResponseAsViewed } from '@/lib/actions/jobs'
 
@@ -180,135 +187,85 @@ export function ResponsesList({ responses }: ResponsesListProps) {
         </div>
       )}
 
-      {/* Response Details Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      {/* Response Details Sheet - Bottom sheet on mobile, side panel on desktop */}
+      <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <SheetContent 
+          side="bottom" 
+          className="h-screen sm:h-auto sm:max-w-2xl lg:max-w-4xl p-0 gap-0 flex flex-col rounded-t-3xl sm:rounded-l-3xl sm:rounded-tr-none data-[state=open]:slide-in-from-bottom sm:data-[state=open]:slide-in-from-right"
+        >
           {selectedResponse && (
             <>
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold text-gray-900">
-                  Response Details
-                </DialogTitle>
-              </DialogHeader>
-              
-              <div className="space-y-6 mt-4">
-                {/* Job Info */}
-                <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shrink-0">
-                      <Briefcase className="w-5 h-5 text-white" />
-                    </div>
+              {/* Gradient Header - Compact */}
+              <div className="relative bg-linear-to-br from-indigo-600 via-purple-600 to-pink-600 px-6 pt-5 pb-5 shrink-0">
+                <button
+                  onClick={() => setIsDialogOpen(false)}
+                  className="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors z-20"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+
+                <div className="pr-12">
+                  {/* Photo and Name Side by Side */}
+                  <div className="flex items-center gap-3 mb-3">
+                    {/* Profile Photo or Initial - Clickable */}
+                    <Link href={`/freelancer/profile/${selectedResponse.freelancerId}`}>
+                      {selectedResponse.freelancer.freelancerProfile?.photoUrl ? (
+                        <div className="w-18 h-18 rounded-full overflow-hidden border-3 border-white/20 backdrop-blur-sm shrink-0 hover:border-white/40 transition-all cursor-pointer">
+                          <Image
+                            src={selectedResponse.freelancer.freelancerProfile.photoUrl}
+                            alt={selectedResponse.freelancer.freelancerProfile.name || 'Freelancer'}
+                            width={72}
+                            height={72}
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-3 border-white/10 shrink-0 hover:bg-white/30 transition-all cursor-pointer">
+                          <User className="w-7 h-7 text-white" />
+                        </div>
+                      )}
+                    </Link>
+                    
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-indigo-700 font-medium mb-1">Job</p>
-                      <h4 className="font-semibold text-gray-900">{selectedResponse.job.title}</h4>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Freelancer Info */}
-                <div>
-                  <h3 className="font-semibold text-lg mb-3 text-gray-900">Freelancer Information</h3>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <User className="w-5 h-5 text-gray-600" />
-                        <div>
-                          <p className="text-xs text-gray-600">Name</p>
-                          <p className="font-semibold text-gray-900">
-                            {selectedResponse.freelancer.freelancerProfile?.name || 'Not provided'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {selectedResponse.freelancer.freelancerProfile?.location && (
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                          <MapPin className="w-5 h-5 text-gray-600" />
-                          <div>
-                            <p className="text-xs text-gray-600">Location</p>
-                            <p className="font-semibold text-gray-900">
-                              {selectedResponse.freelancer.freelancerProfile.location}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {selectedResponse.freelancer.freelancerProfile?.whatsappNumber && (
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                          <Phone className="w-5 h-5 text-gray-600" />
-                          <div>
-                            <p className="text-xs text-gray-600">WhatsApp</p>
-                            <p className="font-semibold text-gray-900">
-                              {selectedResponse.freelancer.freelancerProfile.whatsappNumber}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {selectedResponse.freelancer.freelancerProfile?.verificationStatus && (
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                          <Shield className="w-5 h-5 text-gray-600" />
-                          <div>
-                            <p className="text-xs text-gray-600">Verification</p>
-                            <Badge variant="outline" className="mt-1">
-                              {selectedResponse.freelancer.freelancerProfile.verificationStatus}
-                            </Badge>
-                          </div>
-                        </div>
+                      <Link href={`/freelancer/profile/${selectedResponse.freelancerId}`}>
+                        <SheetTitle className="text-xl font-bold text-white mb-1 hover:text-white/90 transition-colors cursor-pointer flex items-center gap-2">
+                          {selectedResponse.freelancer.freelancerProfile?.name || 'Freelancer'}
+                          <ExternalLink className="w-4 h-4 opacity-70" />
+                        </SheetTitle>
+                      </Link>
+                      {selectedResponse.freelancer.freelancerProfile?.verificationStatus === 'verified' && (
+                        <Badge className="bg-white/20 backdrop-blur-sm text-white border-white/30 px-2.5 py-0.5 text-xs">
+                          <Shield className="w-3 h-3 mr-1" />
+                          Verified
+                        </Badge>
                       )}
                     </div>
-
-                    {/* Equipment */}
-                    {selectedResponse.freelancer.freelancerProfile?.equipmentList && 
-                     (selectedResponse.freelancer.freelancerProfile.equipmentList as string[]).length > 0 && (
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-xs text-gray-600 mb-2">Equipment</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(selectedResponse.freelancer.freelancerProfile.equipmentList as string[]).map((item, idx) => (
-                            <Badge key={idx} variant="secondary">{item}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Portfolio */}
-                    {selectedResponse.freelancer.freelancerProfile?.portfolioLinks &&
-                     (selectedResponse.freelancer.freelancerProfile.portfolioLinks as string[]).length > 0 && (
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-xs text-gray-600 mb-2">Portfolio Links</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(selectedResponse.freelancer.freelancerProfile.portfolioLinks as string[]).map((link, idx) => (
-                            <a
-                              key={idx}
-                              href={link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 hover:underline"
-                            >
-                              Portfolio {idx + 1}
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
+                  
+                  <SheetDescription className="text-white/90 text-sm">
+                    Response for: <Link 
+                      href={`/company/jobs/${selectedResponse.job.id}`}
+                      className="underline hover:text-white font-medium transition-colors"
+                    >
+                      {selectedResponse.job.title}
+                    </Link>
+                  </SheetDescription>
                 </div>
+              </div>
 
-                {/* Proposed Price */}
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto px-6 pt-6 pb-6 bg-white space-y-6">
+                {/* Proposed Price - Compact */}
                 {selectedResponse.proposedPrice && (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center gap-3">
+                  <div className="p-3 bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+                    <div className="flex items-center gap-2.5">
                       <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center shrink-0">
                         <IndianRupee className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm text-green-700 font-medium mb-1">Proposed Price</p>
-                        <p className="text-2xl font-bold text-green-900">₹{selectedResponse.proposedPrice}</p>
-                        {selectedResponse.job.budget && selectedResponse.proposedPrice !== selectedResponse.job.budget && (
-                          <p className="text-sm text-gray-600 mt-1">
-                            Original budget: ₹{selectedResponse.job.budget}
-                          </p>
-                        )}
+                        <p className="text-xs text-green-700 font-medium mb-0.5">Proposed Price</p>
+                        <p className="font-bold text-green-900">{selectedResponse.proposedPrice}</p>
                       </div>
                     </div>
                   </div>
@@ -317,49 +274,117 @@ export function ResponsesList({ responses }: ResponsesListProps) {
                 {/* Message */}
                 {selectedResponse.message && (
                   <div>
-                    <h3 className="font-semibold text-lg mb-3 text-gray-900 flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5 text-indigo-600" />
+                    <h3 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
                       Message
                     </h3>
-                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{selectedResponse.message}</p>
+                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{selectedResponse.message}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Contact Information */}
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 mb-3">Contact Information</h3>
+                  <div className="grid grid-cols-1 gap-3">
+                    {selectedResponse.freelancer.freelancerProfile?.location && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0">
+                          <MapPin className="w-5 h-5 text-indigo-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-600 mb-0.5">Location</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {selectedResponse.freelancer.freelancerProfile.location}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedResponse.freelancer.freelancerProfile?.whatsappNumber && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
+                          <Phone className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-600 mb-0.5">WhatsApp</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {selectedResponse.freelancer.freelancerProfile.whatsappNumber}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Equipment */}
+                {selectedResponse.freelancer.freelancerProfile?.equipmentList && 
+                 (selectedResponse.freelancer.freelancerProfile.equipmentList as string[]).length > 0 && (
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      Equipment
+                    </h3>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      {(selectedResponse.freelancer.freelancerProfile.equipmentList as string[]).map((item, idx) => (
+                        <Badge key={idx} variant="secondary" className="px-3 py-1.5 bg-purple-50 text-purple-700 border border-purple-200">
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Portfolio */}
+                {selectedResponse.freelancer.freelancerProfile?.portfolioLinks &&
+                 (selectedResponse.freelancer.freelancerProfile.portfolioLinks as string[]).length > 0 && (
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      Portfolio
+                    </h3>
+                    <div className="space-y-2">
+                      {(selectedResponse.freelancer.freelancerProfile.portfolioLinks as string[]).map((link, idx) => (
+                        <a
+                          key={idx}
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 p-3 bg-linear-to-r from-cyan-50 to-blue-50 hover:from-cyan-100 hover:to-blue-100 rounded-xl border border-cyan-200 hover:border-cyan-300 transition-all group"
+                        >
+                          <div className="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center shrink-0">
+                            <Award className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900">Portfolio {idx + 1}</p>
+                            <p className="text-xs text-gray-600 truncate">{link}</p>
+                          </div>
+                          <ExternalLink className="w-4 h-4 text-cyan-600 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                        </a>
+                      ))}
                     </div>
                   </div>
                 )}
 
                 {/* Date */}
-                <div className="flex items-center gap-2 text-sm text-gray-600 pt-4 border-t">
-                  <Calendar className="w-4 h-4" />
-                  <span>Received on {format(new Date(selectedResponse.createdAt), 'MMMM d, yyyy \'at\' h:mm a')}</span>
+                <div className="flex items-center gap-2 text-xs text-gray-500 pt-4 border-t">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Received on {format(new Date(selectedResponse.createdAt), 'MMM d, yyyy \'at\' h:mm a')}</span>
                 </div>
+              </div>
 
-                {/* Actions */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
-                  <Link href={`/company/jobs/${selectedResponse.job.id}`} className="flex-1">
-                    <Button variant="outline" className="w-full gap-2">
-                      <Briefcase className="w-4 h-4" />
-                      View Job Details
-                    </Button>
-                  </Link>
-                  <Link href={`/freelancer/profile/${selectedResponse.freelancerId}`} className="flex-1">
-                    <Button variant="outline" className="w-full gap-2">
-                      <User className="w-4 h-4" />
-                      View Freelancer Profile
-                    </Button>
-                  </Link>
-                  <div className="flex-1">
-                    <SendBookingRequest
-                      jobId={selectedResponse.job.id}
-                      freelancerId={selectedResponse.freelancerId}
-                      freelancerName={selectedResponse.freelancer.freelancerProfile?.name || 'Freelancer'}
-                    />
-                  </div>
-                </div>
+              {/* Sticky Bottom CTA */}
+              <div className="sticky bottom-0 left-0 right-0 bg-white border-t px-6 py-4 shrink-0">
+                <SendBookingRequest
+                  jobId={selectedResponse.job.id}
+                  freelancerId={selectedResponse.freelancerId}
+                  freelancerName={selectedResponse.freelancer.freelancerProfile?.name || 'Freelancer'}
+                  bookingRequest={selectedResponse.bookingRequest}
+                  className="w-full h-12 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-base font-semibold shadow-md"
+                />
               </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </>
   )
 }

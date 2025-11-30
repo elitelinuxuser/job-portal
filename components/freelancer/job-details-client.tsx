@@ -27,8 +27,6 @@ interface JobDetailsClientProps {
 export function JobDetailsClient({ job, hasResponded, isVerified, myResponse }: JobDetailsClientProps) {
   const [open, setOpen] = useState(false)
 
-  console.log(isVerified)
-
   return (
     <>
       {/* Sticky Bottom CTA - Mobile Only */}
@@ -84,20 +82,21 @@ export function JobDetailsClient({ job, hasResponded, isVerified, myResponse }: 
 
                 <div className="pr-12">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    {/* <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                       <CheckCircle2 className="w-5 h-5 text-white" />
-                    </div>
+                    </div> */}
                     <Badge className="bg-white/20 backdrop-blur-sm text-white border-white/30 px-3 py-1">
-                      <Sparkles className="w-3 h-3 mr-1" />
+                      {/* <Sparkles className="w-3 h-3 mr-1" /> */}
+                      <CheckCircle2 className="w-3 h-3 mr-0.5 text-white" />
                       Submitted
                     </Badge>
                   </div>
                   
-                  <SheetTitle className="text-2xl font-bold text-white mb-2">
+                  <SheetTitle className="text-2xl font-bold text-white mb-1">
                     Your Application
                   </SheetTitle>
                   
-                  <SheetDescription className="text-green-50 text-base">
+                  <SheetDescription className="text-green-50 text-sm">
                     {job.title}
                   </SheetDescription>
                 </div>
@@ -120,7 +119,6 @@ export function JobDetailsClient({ job, hasResponded, isVerified, myResponse }: 
                 {myResponse.message && (
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                      <Award className="w-4 h-4 text-blue-600" />
                       Your Message
                     </h3>
                     <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">

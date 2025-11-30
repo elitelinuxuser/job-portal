@@ -34,9 +34,6 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
   const [currentFilters, setCurrentFilters] = useState<FilterState | null>(null)
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set())
 
-  console.log("Current Filters: ", currentFilters);
-  console.log("Filtered Jobs: ", filteredJobs);
-
   const handleFilterChange = (filters: FilterState, filtered: JobPost[]) => {
     setCurrentFilters(filters)
     setFilteredJobs(filtered)
@@ -133,7 +130,7 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <CardTitle className="text-lg mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">{job.title}</CardTitle>
-                        <Button
+                        {/* <Button
                           variant="ghost"
                           size="icon"
                           className="shrink-0 h-8 w-8"
@@ -150,7 +147,7 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
                                 : 'text-gray-400 hover:text-red-500'
                             }`} 
                           />
-                        </Button>
+                        </Button> */}
                       </div>
                     <CardDescription className="flex items-center gap-2">
                       <Building2 className="w-4 h-4" />
@@ -207,7 +204,7 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
                     <div className="text-sm text-gray-500">
                       Posted {format(new Date(job.createdAt), 'MMM d, yyyy')}
                     </div>
-                    <Button className="bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+                    <Button className="bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 cursor-pointer">
                       View Details
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
