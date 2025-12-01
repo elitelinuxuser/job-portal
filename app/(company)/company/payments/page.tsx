@@ -83,7 +83,6 @@ export default async function CompanyPaymentsPage() {
           </Card>
         </div>
 
-        {/* Total Paid Card */}
         <div className="mt-4">
           <Card className="border-2 shadow-lg bg-linear-to-br from-blue-50 to-cyan-50">
             <CardContent className="px-4">
