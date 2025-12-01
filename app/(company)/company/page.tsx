@@ -1,13 +1,17 @@
 import { getCompanyJobs } from '@/lib/actions/jobs'
 import { getCompanyProfile } from '@/lib/actions/company'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Plus, Eye } from 'lucide-react'
-import { format } from 'date-fns'
-import { ToggleJobStatus } from '@/components/company/toggle-job-status'
+import { 
+  Plus, 
+  Briefcase, 
+  TrendingUp,
+  FileText
+} from 'lucide-react'
 import { redirect } from 'next/navigation'
+import { Job, JobsListWithTabs } from '@/components/company/jobs-list-with-tabs'
 
 export default async function CompanyDashboard() {
   const profile = await getCompanyProfile()
@@ -22,106 +26,96 @@ export default async function CompanyDashboard() {
     redirect('/company/pending')
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Jobs</h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">Manage your job postings</p>
-          </div>
-          <Badge
-            variant={profile.verificationStatus === 'verified' ? 'default' : 'secondary'}
-            className={`${profile.verificationStatus === 'verified' ? 'bg-green-600' : 'bg-yellow-100 text-yellow-800'} w-fit`}
-          >
-            {profile.verificationStatus === 'verified' ? '✓ Verified' : '⏳ Pending Approval'}
-          </Badge>
-        </div>
-        <Link href="/company/post-job" className="w-full sm:w-auto">
-          <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Post New Job
-          </Button>
-        </Link>
-      </div>
+  // Calculate stats
+  const activeJobs = jobs.filter(job => job.isActive).length
+  const totalResponses = jobs.reduce((sum, job) => sum + job.responses.length, 0)
 
-      {jobs.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 px-4">
-            <p className="text-gray-500 mb-4 text-center">No jobs posted yet</p>
-            <Link href="/company/post-job" className="w-full sm:w-auto">
-              <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Post Your First Job
+  return (
+    <div className="min-h-screen">
+      {/* Header Section */}
+      <section className="bg-linear-to-r from-indigo-600 to-purple-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <Badge
+                variant={profile.verificationStatus === 'verified' ? 'default' : 'secondary'}
+                className={`mb-3 ${profile.verificationStatus === 'verified' ? 'bg-green-500 text-white' : 'bg-yellow-100 text-yellow-800'}`}
+              >
+                {profile.verificationStatus === 'verified' ? '✓ Verified' : '⏳ Pending'}
+              </Badge>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                Welcome back, {profile.companyName}!
+              </h1>
+              <p className="text-indigo-100 text-lg">
+                Manage your job postings and connect with talented creatives
+              </p>
+            </div>
+            <Link href="/company/post-job">
+              <Button size="lg" className="bg-white text-indigo-600 hover:bg-indigo-50 shadow-lg">
+                <Plus className="w-5 h-5" />
+                Post New Job
               </Button>
             </Link>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 sm:gap-6">
-          {jobs.map((job) => (
-            <Card key={job.id}>
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg sm:text-xl">{job.title}</CardTitle>
-                    <CardDescription className="mt-2 line-clamp-2">{job.description}</CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Badge variant={job.isActive ? 'default' : 'secondary'} className="bg-blue-600">
-                      {job.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                    <ToggleJobStatus jobId={job.id} isActive={job.isActive} />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                    <div className="flex flex-col sm:flex-row sm:items-center">
-                      <span className="text-gray-600 text-xs sm:text-sm">Location:</span>
-                      <span className="ml-0 sm:ml-2 font-medium">{job.location}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center">
-                      <span className="text-gray-600 text-xs sm:text-sm">Budget:</span>
-                      <span className="ml-0 sm:ml-2 font-medium text-green-600">₹{job.budget}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center">
-                      <span className="text-gray-600 text-xs sm:text-sm">Job Type:</span>
-                      <span className="ml-0 sm:ml-2 font-medium">{job.jobType}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center">
-                      <span className="text-gray-600 text-xs sm:text-sm">Time:</span>
-                      <span className="ml-0 sm:ml-2 font-medium">{job.time}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Dates:</span>
-                    <div className="mt-1 flex flex-wrap gap-2">
-                      {(job.dates as string[]).map((date, idx) => (
-                        <Badge key={idx} variant="outline">{date}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-3 border-t">
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">{job.responses.length}</span> responses
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Link href={`/company/responses?job=${job.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Responses
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          </div>
         </div>
-      )}
+      </section>
+
+      {/* Stats Cards */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 mb-8">
+        <div className="grid md:grid-cols-3 gap-6">
+          <Card className="border-2 shadow-lg">
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 font-medium">Total Jobs</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{jobs.length}</p>
+                </div>
+                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                  <Briefcase className="w-6 h-6 text-indigo-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-2 shadow-lg">
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 font-medium">Active Jobs</p>
+                  <p className="text-3xl font-bold text-green-600 mt-2">{activeJobs}</p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-2 shadow-lg">
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 font-medium">Total Responses</p>
+                  <p className="text-3xl font-bold text-purple-600 mt-2">{totalResponses}</p>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Jobs List */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Your Job Postings</h2>
+          <p className="text-gray-600 mt-1">Manage and track your listings</p>
+        </div>
+
+        <JobsListWithTabs jobs={jobs as unknown as Job[]} />
+      </section>
     </div>
   )
 }

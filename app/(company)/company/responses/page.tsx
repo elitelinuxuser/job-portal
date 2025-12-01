@@ -1,143 +1,78 @@
 import { getCompanyJobs } from '@/lib/actions/jobs'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { SendBookingRequest } from '@/components/company/send-booking-request'
+import { ResponsesList } from '@/components/company/responses-list'
+import { Card, CardContent } from '@/components/ui/card'
+import { FileText, Briefcase } from 'lucide-react'
+import type { JobResponseWithRelations } from '@/types/job-responses'
 
 export default async function ResponsesPage() {
   const jobs = await getCompanyJobs()
 
   // Get all responses across all jobs
-  const allResponses = jobs.flatMap((job) =>
-    job.responses.map((response: any) => ({
+  const allResponses: JobResponseWithRelations[] = jobs.flatMap((job) =>
+    job.responses.map((response) => ({
       ...response,
       job,
     }))
   )
 
-  const interestedResponses = allResponses.filter((r: any) => r.status === 'interested')
+  const interestedResponses = allResponses
+    .filter((r) => r.status === 'interested')
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Job Responses</h1>
-        <p className="text-gray-600 mt-1">Review freelancer applications</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Header Section */}
+      <section className="bg-linear-to-r from-indigo-600 to-purple-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+              <FileText className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl md:text-4xl font-bold mb-1">
+                Job Responses
+              </h1>
+              <p className="text-indigo-100">
+                Review and manage freelancer applications
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <Card className="border-indigo-200 bg-indigo-50/50">
+            <CardContent className="px-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-indigo-600 mb-1">Total Responses</p>
+                  <p className="text-2xl font-bold text-indigo-900">{interestedResponses.length}</p>
+                </div>
+                <FileText className="w-8 h-8 text-indigo-600 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-purple-200 bg-purple-50/50">
+            <CardContent className="px-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-purple-600 mb-1">Active Jobs</p>
+                  <p className="text-2xl font-bold text-purple-900">{jobs.filter(j => j.isActive).length}</p>
+                </div>
+                <Briefcase className="w-8 h-8 text-purple-600 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {interestedResponses.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-gray-500">No responses yet</p>
-            <p className="text-sm text-gray-400 mt-1">
-              Post jobs to start receiving applications
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {interestedResponses.map((response) => (
-            <Card key={response.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">
-                      Response to: {response.job.title}
-                    </CardTitle>
-                    <Badge variant="default" className="mt-2">Interested</Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4 p-4 border rounded-lg">
-                    <div className="flex-1 space-y-3">
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          {response.freelancer.freelancerProfile?.name || 'Unnamed'}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {response.freelancer.email}
-                        </p>
-                      </div>
-                      
-                      {response.freelancer.freelancerProfile && (
-                        <>
-                          <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div>
-                              <span className="text-gray-600">Location:</span>
-                              <span className="ml-2 font-medium">
-                                {response.freelancer.freelancerProfile.location}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">WhatsApp:</span>
-                              <span className="ml-2 font-medium">
-                                {response.freelancer.freelancerProfile.whatsappNumber}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Verification:</span>
-                              <Badge variant="outline" className="ml-2">
-                                {response.freelancer.freelancerProfile.verificationStatus}
-                              </Badge>
-                            </div>
-                          </div>
-
-                          {response.freelancer.freelancerProfile.equipmentList && 
-                           (response.freelancer.freelancerProfile.equipmentList as string[]).length > 0 && (
-                            <div>
-                              <span className="text-sm text-gray-600">Equipment:</span>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {(response.freelancer.freelancerProfile.equipmentList as string[]).map((item, idx) => (
-                                  <Badge key={idx} variant="secondary">{item}</Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {response.freelancer.freelancerProfile.portfolioLinks &&
-                           (response.freelancer.freelancerProfile.portfolioLinks as string[]).length > 0 && (
-                            <div>
-                              <span className="text-sm text-gray-600">Portfolio:</span>
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {(response.freelancer.freelancerProfile.portfolioLinks as string[]).map((link, idx) => (
-                                  <a
-                                    key={idx}
-                                    href={link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-sm text-blue-600 hover:underline"
-                                  >
-                                    Portfolio {idx + 1}
-                                  </a>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-
-                      {response.message && (
-                        <div className="pt-3 border-t">
-                          <span className="text-sm text-gray-600">Message:</span>
-                          <p className="mt-1 text-sm">{response.message}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <SendBookingRequest
-                      jobId={response.job.id}
-                      freelancerId={response.freelancerId}
-                      freelancerName={response.freelancer.freelancerProfile?.name || 'Freelancer'}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {/* Responses List */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+        <ResponsesList responses={interestedResponses} />
+      </div>
     </div>
   )
 }

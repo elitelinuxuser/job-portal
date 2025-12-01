@@ -5,22 +5,12 @@ export async function POST(request: Request): Promise<NextResponse> {
   const body = (await request.json()) as HandleUploadBody;
 
   try {
-    // Check if the token exists
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      console.error(
-        "BLOB_READ_WRITE_TOKEN is not set in environment variables"
-      );
-      return NextResponse.json(
-        { error: "Blob storage is not configured. Please contact support." },
-        { status: 500 }
-      );
-    }
-
     const jsonResponse = await handleUpload({
       body,
       request,
       onBeforeGenerateToken: async () => {
-        // Add authentication check here if needed
+        // Generate a client token for the upload
+        // You can add authentication checks here if needed
         return {
           allowedContentTypes: [
             "image/jpeg",
@@ -29,11 +19,14 @@ export async function POST(request: Request): Promise<NextResponse> {
             "image/webp",
             "application/pdf",
           ],
-          tokenPayload: JSON.stringify({}),
+          tokenPayload: JSON.stringify({
+            // Optional: Add user information or other metadata
+          }),
         };
       },
-      onUploadCompleted: async () => {
-        // Optional: Do something after upload completes
+      onUploadCompleted: async ({ blob }) => {
+        // Optional: Run after upload completes
+        console.log("Upload completed:", blob.url);
       },
     });
 

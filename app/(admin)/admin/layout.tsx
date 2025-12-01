@@ -5,7 +5,6 @@ import { MobileNav } from '@/components/mobile-nav'
 import { 
   LayoutDashboard, 
   Users, 
-  Mail, 
   BarChart3,
   CheckCircle
 } from 'lucide-react'
@@ -20,7 +19,6 @@ export default async function AdminLayout({
   const navItems = [
     { href: '/admin', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard' },
     { href: '/admin/approvals', icon: <CheckCircle className="w-5 h-5" />, label: 'Approvals' },
-    { href: '/admin/invites', icon: <Mail className="w-5 h-5" />, label: 'Invites' },
     { href: '/admin/users', icon: <Users className="w-5 h-5" />, label: 'Users' },
     { href: '/admin/metrics', icon: <BarChart3 className="w-5 h-5" />, label: 'Metrics' },
   ]
