@@ -12,21 +12,17 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { PaymentFilters, PaymentFilterState } from './payment-filters'
+import { PaymentDetailModal } from './payment-detail-modal'
 import { 
-  Clock, 
   IndianRupee, 
   CheckCircle2, 
   AlertTriangle,
   XCircle,
-  Briefcase,
   X,
-  ChevronRight
+  Clock
 } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { confirmPaymentReceived, disputePayment, deletePayment } from '@/lib/actions/freelancer'
-import { toast } from 'sonner'
 import {
   Sheet,
   SheetContent,
@@ -86,7 +82,31 @@ export function FreelancerPaymentsList({ payments }: FreelancerPaymentsListProps
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedPayment, setSelectedPayment] = useState<any | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedBookingTransactions, setSelectedBookingTransactions] = useState<any[]>([])
+  const [isTransactionsModalOpen, setIsTransactionsModalOpen] = useState(false)
+
+  // Group payments by booking
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const groupedPayments = filteredPayments.reduce((acc: any, payment: any) => {
+    const bookingId = payment.booking.id
+    if (!acc[bookingId]) {
+      acc[bookingId] = {
+        booking: payment.booking,
+        transactions: [],
+        totalAmount: 0,
+        paidAmount: 0,
+      }
+    }
+    acc[bookingId].transactions.push(payment)
+    acc[bookingId].totalAmount = parseFloat(payment.booking?.contractDetails?.budget || 0)
+    if (payment.status === 'paid') {
+      acc[bookingId].paidAmount += parseFloat(payment.amount)
+    }
+    return acc
+  }, {})
+
+  const jobGroups = Object.values(groupedPayments)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleFilterChange = (filters: PaymentFilterState, filtered: any[]) => {
@@ -126,10 +146,10 @@ export function FreelancerPaymentsList({ payments }: FreelancerPaymentsListProps
               <IndianRupee className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No Payments Yet
+              No Payment Transactions Yet
             </h3>
             <p className="text-sm text-gray-600">
-              Payment requests and transactions will appear here
+              Payment requests grouped by job will appear here
             </p>
           </div>
         </CardContent>
@@ -149,8 +169,10 @@ export function FreelancerPaymentsList({ payments }: FreelancerPaymentsListProps
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs sm:text-sm text-gray-600 shrink-0">
           <span className="hidden sm:inline">Showing </span>
-          <span className="font-semibold text-gray-900">{filteredPayments.length}</span>
-          <span className="hidden sm:inline"> of {payments.length}</span> payments
+          <span className="font-semibold text-gray-900">{jobGroups.length}</span>
+          <span className="hidden sm:inline"> job{jobGroups.length !== 1 ? 's' : ''} with</span>
+          <span className="sm:hidden"> / </span>
+          <span className="font-semibold text-gray-900">{filteredPayments.length}</span> payment{filteredPayments.length !== 1 ? 's' : ''}
         </p>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <span className="text-xs sm:text-sm text-gray-600 font-medium">Sort By:</span>
@@ -171,8 +193,8 @@ export function FreelancerPaymentsList({ payments }: FreelancerPaymentsListProps
         </div>
       </div>
 
-      {/* Payments List */}
-      {filteredPayments.length === 0 ? (
+      {/* Job Groups List */}
+      {jobGroups.length === 0 ? (
         <Card className="border-2 border-dashed">
           <CardContent>
             <div className="py-16 text-center">
@@ -195,92 +217,70 @@ export function FreelancerPaymentsList({ payments }: FreelancerPaymentsListProps
             <table className="w-full text-sm">
               <thead className="bg-linear-to-r from-gray-50 to-gray-100 border-b">
                 <tr>
+                  <th className="text-left p-3 font-semibold text-xs text-gray-700">Job Title</th>
                   <th className="text-left p-3 font-semibold text-xs text-gray-700">Company</th>
-                  <th className="text-left p-3 font-semibold text-xs text-gray-700">Amount</th>
-                  <th className="text-left p-3 font-semibold text-xs text-gray-700">Status</th>
-                  <th className="text-left p-3 font-semibold text-xs text-gray-700 hidden lg:table-cell">Date</th>
-                  <th className="w-8"></th>
+                  <th className="text-left p-3 font-semibold text-xs text-gray-700">Total Amount</th>
+                  <th className="text-left p-3 font-semibold text-xs text-gray-700">Amount Paid</th>
+                  <th className="text-left p-3 font-semibold text-xs text-gray-700">Balance Due</th>
+                  <th className="text-left p-3 font-semibold text-xs text-gray-700">Transactions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {filteredPayments.map((payment: any) => {
-                  const statusConfig = getStatusConfig(payment.status)
-                  const StatusIcon = statusConfig.icon
-                  const companyProfile = payment.booking.company.companyProfile
+                {jobGroups.map((group: any) => {
+                  const companyProfile = group.booking.company.companyProfile
 
                   return (
                     <tr 
-                      key={payment.id} 
-                      onClick={() => {
-                        setSelectedPayment(payment)
-                        setIsModalOpen(true)
-                      }}
-                      className="hover:bg-green-50 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-green-600 group"
+                      key={group.booking.id}
+                      className="hover:bg-gray-50 transition-colors"
                     >
+                      {/* Job Title */}
+                      <td className="p-3">
+                        <Link 
+                          href={`/freelancer/bookings/${group.booking.id}`}
+                          className="font-semibold text-sm text-blue-600 hover:underline block truncate max-w-[200px]"
+                          title={group.booking.job?.title || 'Job'}
+                        >
+                          {group.booking.job?.title || 'Job'}
+                        </Link>
+                      </td>
+
                       {/* Company */}
                       <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          {companyProfile?.logoUrl ? (
-                            <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 shrink-0">
-                              <Image
-                                src={companyProfile.logoUrl}
-                                alt={companyProfile.companyName || 'Company'}
-                                width={32}
-                                height={32}
-                                className="object-cover w-full h-full"
-                              />
-                            </div>
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white font-semibold text-xs shrink-0">
-                              {(companyProfile?.companyName || 'C').charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="font-semibold text-xs text-gray-900 truncate">{companyProfile?.companyName || 'Company'}</p>
-                          </div>
-                        </div>
+                        <p className="font-medium text-sm text-gray-900">{companyProfile?.companyName || 'Company'}</p>
                       </td>
 
-                      
-                      {/* Amount */}
+                      {/* Total Amount */}
                       <td className="p-3">
-                        <p className="font-bold text-sm text-gray-900">₹{parseFloat(payment.amount).toLocaleString('en-IN')}</p>
-                        {payment.paymentMode && (
-                          <p className="text-[10px] text-gray-500">
-                            {payment.paymentMode === 'cash' ? 'Cash' : payment.paymentMode === 'upi' ? 'UPI' : 'Bank'}
-                          </p>
-                        )}
+                        <p className="font-bold text-sm text-gray-900">₹{parseFloat(group.totalAmount || 0).toLocaleString('en-IN')}</p>
                       </td>
 
-                      
-                      {/* Status */}
+                      {/* Amount Paid */}
                       <td className="p-3">
-                        <Badge className={`${statusConfig.badgeClass} text-[10px] px-1.5 py-0.5`}>
-                          <StatusIcon className="w-2.5 h-2.5 mr-0.5" />
-                          {statusConfig.label}
-                        </Badge>
+                        <p className="font-semibold text-sm text-green-600">₹{group.paidAmount.toLocaleString('en-IN')}</p>
                       </td>
 
-                      {/* Date - Desktop */}
-                      <td className="p-3 hidden lg:table-cell">
-                        <div className="text-xs text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-2.5 h-2.5" />
-                            <span>{format(new Date(payment.createdAt), 'MMM d')}</span>
-                          </div>
-                          {payment.paidAt && (
-                            <div className="flex items-center gap-1 text-[10px] text-green-600 mt-0.5">
-                              <CheckCircle2 className="w-2.5 h-2.5" />
-                              <span>{format(new Date(payment.paidAt), 'MMM d')}</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Chevron */}
+                      {/* Balance Due */}
                       <td className="p-3">
-                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-green-600 transition-colors" />
+                        <p className={`font-semibold text-sm ${parseFloat(group.totalAmount || 0) - group.paidAmount > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                          ₹{(parseFloat(group.totalAmount || 0) - group.paidAmount).toLocaleString('en-IN')}
+                        </p>
+                      </td>
+
+                      {/* Action */}
+                      <td className="p-3">
+                        <Button
+                          onClick={() => {
+                            setSelectedBookingTransactions(group.transactions)
+                            setIsTransactionsModalOpen(true)
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs w-full"
+                        >
+                          View
+                        </Button>
                       </td>
                     </tr>
                   )
@@ -291,297 +291,91 @@ export function FreelancerPaymentsList({ payments }: FreelancerPaymentsListProps
         </div>
 
         {/* Payment Details Modal */}
-        {selectedPayment && (
-          <Sheet open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <SheetContent 
-              side="bottom" 
-              className="h-auto px-0 pb-0 gap-0 pt-0 border-none rounded-t-3xl overflow-hidden"
-            >
-              {/* Gradient Header */}
-              <div className="relative bg-linear-to-br from-green-600 via-green-500 to-emerald-500 px-6 pt-6 pb-6">
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors z-20"
-                  aria-label="Close"
-                >
-                  <X className="w-5 h-5 text-white" />
-                </button>
+        <PaymentDetailModal
+          payment={selectedPayment}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
 
-                <div className="pr-12">
-                  <div className="flex items-start gap-3">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0">
-                      <IndianRupee className="w-8 h-8 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <SheetTitle className="text-xl font-bold text-white mb-2">
-                        Payment Details
-                      </SheetTitle>
-                      <Badge className={`${getStatusConfig(selectedPayment.status).badgeClass} text-xs px-2 py-1 w-fit mb-2`}>
-                        {(() => {
-                          const StatusIcon = getStatusConfig(selectedPayment.status).icon
-                          return <StatusIcon className="w-3 h-3 mr-1" />
-                        })()}
-                        {getStatusConfig(selectedPayment.status).label}
-                      </Badge>
-                    </div>
+        {/* Transactions List Modal */}
+        <Sheet open={isTransactionsModalOpen} onOpenChange={setIsTransactionsModalOpen}>
+          <SheetContent 
+            side="bottom" 
+            className="h-auto px-0 pb-0 gap-0 pt-0 border-none rounded-t-3xl overflow-hidden"
+          >
+            {/* Gradient Header */}
+            <div className="relative bg-linear-to-br from-green-600 via-green-500 to-emerald-500 px-6 pt-6 pb-6">
+              <button
+                onClick={() => setIsTransactionsModalOpen(false)}
+                className="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors z-20"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+
+              <div className="pr-12">
+                <div className="flex items-start gap-3">
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0">
+                    <IndianRupee className="w-8 h-8 text-white" />
                   </div>
-                  <p className="text-sm text-green-50 mt-1">
-                        Review and manage this payment request from {selectedPayment.booking.company.companyProfile?.companyName || 'the company'}
-                      </p>
+                  <div className="flex-1">
+                    <SheetTitle className="text-xl font-bold text-white mb-2">
+                      Payment Transactions
+                    </SheetTitle>
+                  </div>
                 </div>
+                <p className="text-sm text-green-50 mt-3">
+                  All payment transactions for this job
+                </p>
               </div>
+            </div>
 
-              {/* Content */}
-              <div className="px-6 pt-6 pb-6 bg-white overflow-y-auto max-h-[70vh] space-y-4">
-                {/* Company Info */}
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                  {selectedPayment.booking.company.companyProfile?.logoUrl ? (
-                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200">
-                      <Image
-                        src={selectedPayment.booking.company.companyProfile.logoUrl}
-                        alt={selectedPayment.booking.company.companyProfile.companyName || 'Company'}
-                        width={48}
-                        height={48}
-                        className="object-cover w-full h-full"
-                      />
+            {/* Content */}
+            <div className="px-6 pt-6 pb-6 bg-white overflow-y-auto max-h-[70vh] space-y-3">
+              {selectedBookingTransactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  onClick={() => {
+                    setSelectedPayment(transaction)
+                    setIsTransactionsModalOpen(false)
+                    setIsModalOpen(true)
+                  }}
+                  className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <p className="font-bold text-lg text-gray-900">₹{parseFloat(transaction.amount).toLocaleString('en-IN')}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {transaction.status === 'pending' && `Requested on ${format(new Date(transaction.createdAt), 'MMM d, yyyy')}`}
+                        {transaction.status === 'disputed' && transaction.updatedAt && `Dispute raised on ${format(new Date(transaction.updatedAt), 'MMM d, yyyy')}`}
+                        {transaction.status === 'declined' && transaction.updatedAt && `Declined on ${format(new Date(transaction.updatedAt), 'MMM d, yyyy')}`}
+                        {transaction.status === 'paid' && transaction.paidAt && `Paid on ${format(new Date(transaction.paidAt), 'MMM d, yyyy')}`}
+                        {transaction.status === 'awaiting_confirmation' && transaction.awaitingConfirmationAt && `Awaiting confirmation since ${format(new Date(transaction.awaitingConfirmationAt), 'MMM d, yyyy')}`}
+                      </p>
                     </div>
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-linear-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white font-semibold">
-                      {(selectedPayment.booking.company.companyProfile?.companyName || 'C').charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{selectedPayment.booking.company.companyProfile?.companyName || 'Company'}</h3>
-                    <Link href={`/freelancer/bookings/${selectedPayment.booking.id}`} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-                      <Briefcase className="w-3 h-3" />
-                      View Booking
-                    </Link>
+                    <Badge className={`${getStatusConfig(transaction.status).badgeClass} text-xs px-2 py-1`}>
+                      {(() => {
+                        const StatusIcon = getStatusConfig(transaction.status).icon
+                        return <StatusIcon className="w-3 h-3 mr-1" />
+                      })()}
+                      {getStatusConfig(transaction.status).label}
+                    </Badge>
                   </div>
-                </div>
-
-                {/* Amount */}
-                <div className="p-4 bg-linear-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg">
-                  <p className="text-sm text-green-700 mb-1">Payment Amount</p>
-                  <p className="text-xl font-bold text-gray-900">₹{parseFloat(selectedPayment.amount).toLocaleString('en-IN')}</p>
-                  {selectedPayment.paymentMode && (
-                    <p className="text-sm text-green-600 mt-1">
-                      via {selectedPayment.paymentMode === 'cash' ? 'Cash' : selectedPayment.paymentMode === 'upi' ? 'UPI' : 'Net Banking'}
+                  
+                  {transaction.paymentMode && (
+                    <p className="text-xs text-gray-600">
+                      via {transaction.paymentMode === 'cash' ? 'Cash' : transaction.paymentMode === 'upi' ? 'UPI' : 'Net Banking'}
                     </p>
                   )}
-                </div>
-
-                {/* Dates */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <p className="text-xs text-gray-500 mb-1">Requested</p>
-                    <p className="text-sm font-medium text-gray-900">{format(new Date(selectedPayment.createdAt), 'MMM d, yyyy')}</p>
-                  </div>
-                  {selectedPayment.paidAt && (
-                    <div className="p-3 bg-green-50 rounded-lg">
-                      <p className="text-xs text-green-600 mb-1">Paid</p>
-                      <p className="text-sm font-medium text-gray-900">{format(new Date(selectedPayment.paidAt), 'MMM d, yyyy')}</p>
-                    </div>
+                  
+                  {transaction.requestNotes && (
+                    <p className="text-xs text-gray-600 mt-2 italic">&ldquo;{transaction.requestNotes}&rdquo;</p>
                   )}
                 </div>
-
-                {/* Notes */}
-                {selectedPayment.requestNotes && (
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm font-semibold text-blue-900 mb-2">Request Notes</p>
-                    <p className="text-sm text-gray-700">{selectedPayment.requestNotes}</p>
-                  </div>
-                )}
-                {selectedPayment.paymentNotes && (
-                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                    <p className="text-sm font-semibold text-purple-900 mb-2">Payment Notes</p>
-                    <p className="text-sm text-gray-700">{selectedPayment.paymentNotes}</p>
-                  </div>
-                )}
-                {selectedPayment.declineReason && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm font-semibold text-red-900 mb-2">Decline Reason</p>
-                    <p className="text-sm text-red-800">{selectedPayment.declineReason}</p>
-                  </div>
-                )}
-                {selectedPayment.disputeReason && (
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-sm font-semibold text-amber-900 mb-2">Dispute Reason</p>
-                    <p className="text-sm text-amber-800">{selectedPayment.disputeReason}</p>
-                  </div>
-                )}
-
-                {/* Actions */}
-                {selectedPayment.status === 'pending' && (
-                  <div className="pt-4 border-t">
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button 
-                        onClick={() => setIsDeleteConfirmOpen(true)}
-                        variant="outline"
-                        className="h-12 border-2 border-red-600 text-red-600 hover:bg-red-50 text-sm font-semibold"
-                      >
-                        <XCircle className="w-4 h-4 mr-1.5" />
-                        Delete
-                      </Button>
-                      <Button 
-                        onClick={async () => {
-                          try {
-                            await confirmPaymentReceived(selectedPayment.id)
-                            toast.success('Payment marked as paid!')
-                            setIsModalOpen(false)
-                            window.location.reload()
-                          } catch {
-                            toast.error('Failed to mark as paid')
-                          }
-                        }}
-                        className="h-12 bg-green-600 hover:bg-green-700 text-sm font-semibold"
-                      >
-                        <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                        Mark as Paid
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                {selectedPayment.status === 'awaiting_confirmation' && (
-                  <div className="pt-4 border-t">
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
-                      <p className="text-sm text-blue-700 font-medium">Company has marked this payment as paid. Please confirm receipt.</p>
-                    </div>
-                    <Button 
-                      onClick={async () => {
-                        try {
-                          await confirmPaymentReceived(selectedPayment.id)
-                          toast.success('Payment confirmed!')
-                          setIsModalOpen(false)
-                          window.location.reload()
-                        } catch {
-                          toast.error('Failed to confirm payment')
-                        }
-                      }}
-                      className="w-full h-12 bg-green-600 hover:bg-green-700 text-sm font-semibold"
-                    >
-                      <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                      Confirm Payment Received
-                    </Button>
-                  </div>
-                )}
-                {selectedPayment.status === 'paid' && (
-                  <div className="pt-4 border-t">
-                    <Button 
-                      onClick={async () => {
-                        const reason = prompt('Please provide a reason for the dispute:')
-                        if (!reason) return
-                        try {
-                          await disputePayment({ paymentId: selectedPayment.id, reason })
-                          toast.success('Dispute submitted')
-                          setIsModalOpen(false)
-                          window.location.reload()
-                        } catch {
-                          toast.error('Failed to submit dispute')
-                        }
-                      }}
-                      variant="outline"
-                      className="w-full h-12 border-2 border-red-600 text-red-600 hover:bg-red-50 text-base font-semibold"
-                    >
-                      <AlertTriangle className="w-5 h-5 mr-2" />
-                      Dispute Payment
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </SheetContent>
-          </Sheet>
-        )}
-        
-        {/* Delete Confirmation Modal */}
-        {selectedPayment && (
-          <Sheet open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-            <SheetContent 
-              side="bottom" 
-              className="h-auto px-0 pb-0 gap-0 pt-0 border-none rounded-t-3xl overflow-hidden"
-            >
-              {/* Gradient Header */}
-              <div className="relative bg-linear-to-br from-red-600 via-red-500 to-rose-500 px-6 pt-6 pb-6">
-                <button
-                  onClick={() => setIsDeleteConfirmOpen(false)}
-                  className="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors z-20"
-                  aria-label="Close"
-                >
-                  <X className="w-5 h-5 text-white" />
-                </button>
-
-                <div className="pr-12">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shrink-0">
-                      <AlertTriangle className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1 self-center">
-                      <SheetTitle className="text-xl font-bold text-white">
-                        Delete Request?
-                      </SheetTitle>
-                    </div>
-                  </div>
-                  <p className="text-sm text-red-50 mt-3">
-                    Are you sure you want to delete this payment request for ₹{parseFloat(selectedPayment.amount).toLocaleString('en-IN')}? This action cannot be undone.
-                  </p>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="px-6 pt-6 pb-6 bg-white space-y-4">
-                {/* Company Info */}
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                  {selectedPayment.booking.company.companyProfile?.logoUrl ? (
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
-                      <Image
-                        src={selectedPayment.booking.company.companyProfile.logoUrl}
-                        alt={selectedPayment.booking.company.companyProfile.companyName || 'Company'}
-                        width={40}
-                        height={40}
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white font-semibold text-sm">
-                      {(selectedPayment.booking.company.companyProfile?.companyName || 'C').charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div>
-                    <p className="font-semibold text-sm text-gray-900">{selectedPayment.booking.company.companyProfile?.companyName || 'Company'}</p>
-                    <p className="text-xs text-gray-500">Requested on {format(new Date(selectedPayment.createdAt), 'MMM d, yyyy')}</p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="grid grid-cols-2 gap-3">
-                  <Button 
-                    onClick={() => setIsDeleteConfirmOpen(false)}
-                    variant="outline"
-                    className="h-12 text-sm font-semibold"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={async () => {
-                      try {
-                        await deletePayment(selectedPayment.id)
-                        toast.success('Payment request deleted successfully')
-                        setIsDeleteConfirmOpen(false)
-                        setIsModalOpen(false)
-                        window.location.reload()
-                      } catch {
-                        toast.error('Failed to delete payment request')
-                      }
-                    }}
-                    className="h-12 bg-red-600 hover:bg-red-700 text-sm font-semibold"
-                  >
-                    <XCircle className="w-4 h-4 mr-1.5" />
-                    Delete Request
-                  </Button>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-        )}
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
         </>
       )}
     </div>

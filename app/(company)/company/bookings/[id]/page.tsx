@@ -27,8 +27,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { getJobTypeLabel } from '@/lib/constants/job-types'
-import { MarkAsPaidDialog } from '@/components/company/mark-as-paid-dialog'
 import { UpdateBookingDialog } from '@/components/company/update-booking-dialog'
+import { CompanyBookingPaymentHistory } from '@/components/company/company-booking-payment-history'
+import { MakePaymentButton } from '@/components/company/make-payment-button'
 
 const getStatusConfig = (status: string) => {
   switch (status) {
@@ -387,30 +388,15 @@ export default async function BookingDetailsPage({ params }: { params: Promise<{
             {(booking.payments.length > 0 || booking.status === 'accepted') && (
               <div className="border-t pt-6">
                 <h2 className="font-semibold text-lg mb-3 text-gray-900">
-                  {booking.payments.length > 0 ? 'Payment History' : 'Payment'}
+                  Payment History
                 </h2>
                 {booking.payments.length > 0 ? (
-                  <div className="space-y-3">
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    {booking.payments.map((payment: any) => (
-                      <div key={payment.id} className="p-4 bg-green-50 rounded-lg border border-green-200">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p className="text-xl font-bold text-green-900">₹{payment.amount}</p>
-                            <p className="text-xs text-green-700 mt-1">
-                              Paid on {format(new Date(payment.paidAt), 'MMM d, yyyy')}
-                            </p>
-                          </div>
-                          <Badge className="bg-green-600 text-white">Paid</Badge>
-                        </div>
-                        {payment.notes && (
-                          <p className="text-sm text-gray-700 mt-2">{payment.notes}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <CompanyBookingPaymentHistory payments={booking.payments} booking={booking} />
                 ) : (
-                  <MarkAsPaidDialog bookingId={booking.id} budget={contract.budget} />
+                  <div className="p-6 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                    <p className="text-sm text-gray-600">No payment transactions yet</p>
+                    <p className="text-xs text-gray-500 mt-1">Use the &quot;Make Payment&quot; button below to initiate a payment</p>
+                  </div>
                 )}
               </div>
             )}
@@ -432,6 +418,21 @@ export default async function BookingDetailsPage({ params }: { params: Promise<{
                 bookingId={booking.id}
                 currentBudget={contract.budget}
                 freelancerName={freelancerProfile?.name || 'Freelancer'}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Sticky Make Payment Button - For Accepted Bookings */}
+      {booking.status === 'accepted' && (
+        <div className="fixed bottom-0 left-0 right-0 sm:relative sm:max-w-5xl sm:mx-auto sm:px-6 lg:px-8 z-50">
+          <Card className="rounded-none sm:rounded-lg border-x-0 sm:border-x border-t sm:border-t shadow-lg sm:shadow-lg backdrop-blur-sm bg-white/95 sm:bg-white p-0">
+            <CardContent className="p-4">
+              <MakePaymentButton
+                bookingId={booking.id}
+                totalAmount={parseFloat(contract.budget)}
+                payments={booking.payments}
               />
             </CardContent>
           </Card>
