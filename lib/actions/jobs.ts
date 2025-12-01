@@ -372,9 +372,12 @@ export async function markBookingAsPaid(data: {
   await db.insert(payments).values({
     bookingId: data.bookingId,
     amount: data.amount,
-    paidAt: new Date(),
-    markedBy: userId,
-    notes: data.notes,
+    status: "awaiting_confirmation",
+    paidBy: userId,
+    paymentNotes: data.notes,
+    awaitingConfirmationAt: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
   });
 
   // Update booking status
