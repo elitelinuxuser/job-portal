@@ -276,3 +276,37 @@ export async function createCompanyPayment(data: {
 
   return { success: true };
 }
+
+export async function getCompanyPayments() {
+  await requireRole("company");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Get all payments for bookings where company is the creator
+  const allPayments = await db.query.payments.findMany({
+    with: {
+      booking: {
+        with: {
+          job: true,
+          freelancer: {
+            with: {
+              freelancerProfile: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: (payments, { desc }) => [desc(payments.createdAt)],
+  });
+
+  // Filter payments where the booking belongs to this company
+  const companyPayments = allPayments.filter(
+    (payment) => payment.booking.companyId === userId
+  );
+
+  return companyPayments;
+}
