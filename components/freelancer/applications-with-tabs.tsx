@@ -101,16 +101,16 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
               <FileText className="w-8 h-8 text-blue-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">
               {activeTab === 'under-review' ? 'No Active Applications' : 'No Closed Applications'}
             </h3>
-            <p className="text-gray-600 text-center">
+            <p className="text-gray-600 text-center text-sm">
               {activeTab === 'under-review' 
                 ? "You don't have any applications currently under review." 
                 : "You don't have any closed applications yet."}
             </p>
             {activeTab === 'under-review' && (
-              <Link href="/freelancer">
+              <Link href="/freelancer" className='mt-4'>
                 <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
                   <Sparkles className="w-4 h-4" />
                   Browse Jobs
@@ -220,8 +220,8 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
           <CardContent className='px-4'>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-blue-600 mb-1">Total Applications</p>
-                <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
+                <p className="text-xs font-medium text-blue-600 mb-0.5">Total Applications</p>
+                <p className="text-xl font-bold text-blue-900">{stats.total}</p>
               </div>
               <FileText className="w-8 h-8 text-blue-600 opacity-50" />
             </div>
@@ -232,8 +232,8 @@ export function ApplicationsWithTabs({ applications }: ApplicationsWithTabsProps
           <CardContent className='px-4'>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-amber-600 mb-1">Under Review</p>
-                <p className="text-2xl font-bold text-amber-900">{stats.underReview}</p>
+                <p className="text-xs font-medium text-amber-600 mb-0.5">Under Review</p>
+                <p className="text-xl font-bold text-amber-900">{stats.underReview}</p>
               </div>
               <Clock className="w-8 h-8 text-amber-600 opacity-50" />
             </div>

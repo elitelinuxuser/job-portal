@@ -29,7 +29,7 @@ export default async function BookingsPage() {
       </section>
 
       {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 mb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border-2 shadow-lg">
             <CardContent>

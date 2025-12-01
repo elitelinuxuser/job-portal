@@ -7,6 +7,7 @@ import {
   jobPosts,
   jobResponses,
   bookingRequests,
+  payments,
 } from "@/lib/db/schema";
 import { requireRole, updateUserMetadata } from "@/lib/auth";
 import { auth } from "@clerk/nextjs/server";
@@ -196,6 +197,7 @@ export async function getFreelancerBookings() {
 export async function respondToBooking(data: {
   bookingId: string;
   accept: boolean;
+  rejectionReason?: string;
 }) {
   await requireRole("freelancer");
 
@@ -221,14 +223,61 @@ export async function respondToBooking(data: {
     .update(bookingRequests)
     .set({
       status: data.accept ? "accepted" : "rejected",
+      rejectionReason: data.accept ? null : data.rejectionReason || null,
       updatedAt: new Date(),
     })
     .where(eq(bookingRequests.id, data.bookingId))
     .returning();
 
   revalidatePath("/freelancer/bookings");
+  revalidatePath(`/freelancer/bookings/${data.bookingId}`);
 
   return { success: true, booking: updated };
+}
+
+export async function requestPayment(data: {
+  bookingId: string;
+  amount: number;
+  notes?: string;
+}) {
+  await requireRole("freelancer");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Verify booking belongs to freelancer and is accepted
+  const booking = await db.query.bookingRequests.findFirst({
+    where: and(
+      eq(bookingRequests.id, data.bookingId),
+      eq(bookingRequests.freelancerId, userId),
+      eq(bookingRequests.status, "accepted")
+    ),
+  });
+
+  if (!booking) {
+    throw new Error("Booking not found or not in accepted state");
+  }
+
+  // Create payment request
+  const [payment] = await db
+    .insert(payments)
+    .values({
+      bookingId: data.bookingId,
+      amount: data.amount.toString(),
+      status: "pending",
+      requestedBy: userId,
+      requestNotes: data.notes || null,
+    })
+    .returning();
+
+  revalidatePath("/freelancer/bookings");
+  revalidatePath(`/freelancer/bookings/${data.bookingId}`);
+  revalidatePath("/freelancer/payments");
+
+  return { success: true, payment };
 }
 
 export async function getJobById(jobId: string) {
@@ -394,6 +443,162 @@ export async function withdrawApplication(responseId: string) {
 
   revalidatePath("/freelancer/applications");
   revalidatePath("/freelancer");
+
+  return { success: true };
+}
+
+export async function getFreelancerPayments() {
+  await requireRole("freelancer");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Get all payments for bookings where freelancer is the recipient
+  const allPayments = await db.query.payments.findMany({
+    with: {
+      booking: {
+        with: {
+          job: true,
+          company: {
+            with: {
+              companyProfile: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: (payments, { desc }) => [desc(payments.createdAt)],
+  });
+
+  // Filter payments where the booking belongs to this freelancer
+  const freelancerPayments = allPayments.filter(
+    (payment) => payment.booking.freelancerId === userId
+  );
+
+  return freelancerPayments;
+}
+
+export async function confirmPaymentReceived(paymentId: string) {
+  await requireRole("freelancer");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Verify payment belongs to freelancer
+  const payment = await db.query.payments.findFirst({
+    where: eq(payments.id, paymentId),
+    with: {
+      booking: true,
+    },
+  });
+
+  if (!payment || payment.booking.freelancerId !== userId) {
+    throw new Error("Payment not found");
+  }
+
+  if (
+    payment.status !== "pending" &&
+    payment.status !== "awaiting_confirmation"
+  ) {
+    throw new Error(
+      "Payment must be in pending or awaiting_confirmation state"
+    );
+  }
+
+  const [updated] = await db
+    .update(payments)
+    .set({
+      status: "paid",
+      paidAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(payments.id, paymentId))
+    .returning();
+
+  revalidatePath("/freelancer/payments");
+
+  return { success: true, payment: updated };
+}
+
+export async function disputePayment(data: {
+  paymentId: string;
+  reason: string;
+}) {
+  await requireRole("freelancer");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Verify payment belongs to freelancer and is in paid state
+  const payment = await db.query.payments.findFirst({
+    where: eq(payments.id, data.paymentId),
+    with: {
+      booking: true,
+    },
+  });
+
+  if (!payment || payment.booking.freelancerId !== userId) {
+    throw new Error("Payment not found");
+  }
+
+  if (payment.status !== "paid") {
+    throw new Error("Payment must be in paid state to dispute");
+  }
+
+  const [updated] = await db
+    .update(payments)
+    .set({
+      status: "disputed",
+      disputeReason: data.reason,
+      updatedAt: new Date(),
+    })
+    .where(eq(payments.id, data.paymentId))
+    .returning();
+
+  revalidatePath("/freelancer/payments");
+
+  return { success: true, payment: updated };
+}
+
+export async function deletePayment(paymentId: string) {
+  await requireRole("freelancer");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Verify payment belongs to freelancer and is in pending state
+  const payment = await db.query.payments.findFirst({
+    where: eq(payments.id, paymentId),
+    with: {
+      booking: true,
+    },
+  });
+
+  if (!payment || payment.booking.freelancerId !== userId) {
+    throw new Error("Payment not found");
+  }
+
+  if (payment.status !== "pending") {
+    throw new Error("Only pending payment requests can be deleted");
+  }
+
+  // Delete the payment
+  await db.delete(payments).where(eq(payments.id, paymentId));
+
+  revalidatePath("/freelancer/payments");
+  revalidatePath(`/freelancer/bookings/${payment.bookingId}`);
 
   return { success: true };
 }

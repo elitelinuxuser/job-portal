@@ -48,6 +48,18 @@ export const verificationStatusEnum = pgEnum("verification_status", [
   "verified",
   "rejected",
 ]);
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pending",
+  "awaiting_confirmation",
+  "paid",
+  "declined",
+  "disputed",
+]);
+export const paymentModeEnum = pgEnum("payment_mode", [
+  "cash",
+  "upi",
+  "net_banking",
+]);
 export const jobTypeEnum = pgEnum("job_type", [
   "candid_photographer",
   "cinematographer",
@@ -223,12 +235,18 @@ export const payments = pgTable("payments", {
     .notNull()
     .references(() => bookingRequests.id),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  paidAt: timestamp("paid_at").notNull(),
-  markedBy: text("marked_by")
-    .notNull()
-    .references(() => users.id),
-  notes: text("notes"),
+  status: paymentStatusEnum("status").notNull().default("pending"),
+  paymentMode: paymentModeEnum("payment_mode"), // cash, upi, or net_banking
+  requestedBy: text("requested_by").references(() => users.id), // null if company initiates directly
+  paidBy: text("paid_by").references(() => users.id), // company who paid
+  paidAt: timestamp("paid_at"),
+  awaitingConfirmationAt: timestamp("awaiting_confirmation_at"),
+  requestNotes: text("request_notes"), // notes when requesting
+  paymentNotes: text("payment_notes"), // notes when paying
+  declineReason: text("decline_reason"), // reason for declining request
+  disputeReason: text("dispute_reason"), // reason for dispute
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Relations

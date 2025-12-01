@@ -549,3 +549,177 @@ export async function markResponseAsViewed(responseId: string) {
 
   return { success: true };
 }
+
+// Payment Management Actions for Company
+
+export async function getCompanyPayments() {
+  await requireRole("company");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Get all payments for bookings created by this company
+  const allPayments = await db.query.payments.findMany({
+    with: {
+      booking: {
+        with: {
+          job: true,
+          freelancer: {
+            with: {
+              freelancerProfile: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: (payments, { desc }) => [desc(payments.createdAt)],
+  });
+
+  // Filter payments where the booking belongs to this company
+  const companyPayments = allPayments.filter(
+    (payment) => payment.booking.companyId === userId
+  );
+
+  return companyPayments;
+}
+
+export async function payPaymentRequest(data: {
+  paymentId: string;
+  paymentMode: "cash" | "upi" | "net_banking";
+  notes?: string;
+}) {
+  await requireRole("company");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Verify payment belongs to company and is in pending state
+  const payment = await db.query.payments.findFirst({
+    where: eq(payments.id, data.paymentId),
+    with: {
+      booking: true,
+    },
+  });
+
+  if (!payment || payment.booking.companyId !== userId) {
+    throw new Error("Payment not found");
+  }
+
+  if (payment.status !== "pending") {
+    throw new Error("Payment must be in pending state");
+  }
+
+  const [updated] = await db
+    .update(payments)
+    .set({
+      status: "paid",
+      paymentMode: data.paymentMode,
+      paidBy: userId,
+      paidAt: new Date(),
+      paymentNotes: data.notes || null,
+      updatedAt: new Date(),
+    })
+    .where(eq(payments.id, data.paymentId))
+    .returning();
+
+  revalidatePath("/company/payments");
+  revalidatePath(`/company/bookings/${payment.booking.id}`);
+
+  return { success: true, payment: updated };
+}
+
+export async function declinePaymentRequest(data: {
+  paymentId: string;
+  reason: string;
+}) {
+  await requireRole("company");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Verify payment belongs to company and is in pending state
+  const payment = await db.query.payments.findFirst({
+    where: eq(payments.id, data.paymentId),
+    with: {
+      booking: true,
+    },
+  });
+
+  if (!payment || payment.booking.companyId !== userId) {
+    throw new Error("Payment not found");
+  }
+
+  if (payment.status !== "pending") {
+    throw new Error("Payment must be in pending state to decline");
+  }
+
+  const [updated] = await db
+    .update(payments)
+    .set({
+      status: "declined",
+      declineReason: data.reason,
+      updatedAt: new Date(),
+    })
+    .where(eq(payments.id, data.paymentId))
+    .returning();
+
+  revalidatePath("/company/payments");
+
+  return { success: true, payment: updated };
+}
+
+export async function createDirectPayment(data: {
+  bookingId: string;
+  amount: number;
+  paymentMode: "cash" | "upi" | "net_banking";
+  notes?: string;
+}) {
+  await requireRole("company");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Verify booking belongs to company
+  const booking = await db.query.bookingRequests.findFirst({
+    where: and(
+      eq(bookingRequests.id, data.bookingId),
+      eq(bookingRequests.companyId, userId)
+    ),
+  });
+
+  if (!booking) {
+    throw new Error("Booking not found");
+  }
+
+  // Create direct payment (no request, directly to paid status)
+  const [payment] = await db
+    .insert(payments)
+    .values({
+      bookingId: data.bookingId,
+      amount: data.amount.toString(),
+      status: "paid",
+      paymentMode: data.paymentMode,
+      requestedBy: null, // null indicates direct payment
+      paidBy: userId,
+      paidAt: new Date(),
+      paymentNotes: data.notes || null,
+    })
+    .returning();
+
+  revalidatePath("/company/payments");
+  revalidatePath(`/company/bookings/${data.bookingId}`);
+
+  return { success: true, payment };
+}
