@@ -2082,6 +2082,11 @@ doctrine@^2.1.0:
   dependencies:
     esutils "^2.0.2"
 
+dotenv@^16.4.5:
+  version "16.6.1"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.6.1.tgz#773f0e69527a8315c7285d5ee73c4459d20a8020"
+  integrity sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==
+
 dotenv@^17.2.3:
   version "17.2.3"
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-17.2.3.tgz#ad995d6997f639b11065f419a22fabf567cdb9a2"
@@ -4249,6 +4254,13 @@ uuid@^10.0.0:
   version "10.0.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-10.0.0.tgz#5a95aa454e6e002725c79055fd42aaba30ca6294"
   integrity sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==
+
+wasenderapi@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/wasenderapi/-/wasenderapi-0.4.0.tgz#4535c4d7b6dbafbf3a5ed8761bcacaee931e7f6e"
+  integrity sha512-JyZc6Tes7gLGRK/jXF5FTpZDutVFaD43YkUlfXXrp38BeIaW8edLOc2kq7T14ZN+wkqRCbhRR+njnt48pgY5ZA==
+  dependencies:
+    dotenv "^16.4.5"
 
 which-boxed-primitive@^1.1.0, which-boxed-primitive@^1.1.1:
   version "1.1.1"

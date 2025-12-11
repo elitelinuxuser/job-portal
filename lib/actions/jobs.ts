@@ -6,12 +6,19 @@ import {
   jobResponses,
   bookingRequests,
   payments,
+  companyProfiles,
 } from "@/lib/db/schema";
 import { requireRole } from "@/lib/auth";
 import { auth } from "@clerk/nextjs/server";
-import { eq, and, or } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { JobType } from "@/lib/constants/job-types";
+import {
+  notifyFreelancerBookingRequest,
+  notifyFreelancerPaymentMarked,
+  notifyFreelancerPaymentDeclined,
+  notifyJobCompleted,
+} from "@/lib/wasender";
 
 export interface Job {
   title: string;
@@ -250,6 +257,37 @@ export async function createBookingRequest(data: {
       updatedAt: new Date(),
     })
     .where(eq(jobPosts.id, data.jobId));
+
+  // Send WhatsApp notification to freelancer about booking request
+  try {
+    const freelancer = await db.query.users.findFirst({
+      where: eq(jobPosts.companyId, data.freelancerId),
+      with: {
+        freelancerProfile: true,
+      },
+    });
+
+    const company = await db.query.companyProfiles.findFirst({
+      where: eq(companyProfiles.userId, userId),
+    });
+
+    if (freelancer?.freelancerProfile?.whatsappNumber && company) {
+      // Format dates for notification
+      const datesStr = job.dates
+        .map((d) => d.date)
+        .slice(0, 3)
+        .join(", ");
+
+      await notifyFreelancerBookingRequest(
+        freelancer.freelancerProfile.whatsappNumber,
+        company.companyName,
+        job.title,
+        datesStr
+      );
+    }
+  } catch (error) {
+    console.error("Failed to send WhatsApp notification:", error);
+  }
 
   revalidatePath("/company/bookings");
   revalidatePath("/company/responses");
@@ -511,6 +549,32 @@ export async function completeJob(jobId: string) {
     })
     .where(eq(bookingRequests.jobId, jobId));
 
+  // Send WhatsApp notification to freelancer about job completion
+  try {
+    if (job.bookedFreelancerId) {
+      const freelancer = await db.query.users.findFirst({
+        where: eq(jobPosts.companyId, job.bookedFreelancerId),
+        with: {
+          freelancerProfile: true,
+        },
+      });
+
+      const company = await db.query.companyProfiles.findFirst({
+        where: eq(companyProfiles.userId, userId),
+      });
+
+      if (freelancer?.freelancerProfile?.whatsappNumber && company) {
+        await notifyJobCompleted(
+          freelancer.freelancerProfile.whatsappNumber,
+          job.title,
+          company.companyName
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Failed to send WhatsApp notification:", error);
+  }
+
   revalidatePath("/company");
   revalidatePath("/freelancer");
 
@@ -631,6 +695,39 @@ export async function payPaymentRequest(data: {
     .where(eq(payments.id, data.paymentId))
     .returning();
 
+  // Send WhatsApp notification to freelancer about payment
+  try {
+    const bookingWithDetails = await db.query.bookingRequests.findFirst({
+      where: eq(bookingRequests.id, payment.booking.id),
+      with: {
+        job: true,
+        freelancer: {
+          with: {
+            freelancerProfile: true,
+          },
+        },
+      },
+    });
+
+    const company = await db.query.companyProfiles.findFirst({
+      where: eq(companyProfiles.userId, userId),
+    });
+
+    if (
+      bookingWithDetails?.freelancer?.freelancerProfile?.whatsappNumber &&
+      company
+    ) {
+      await notifyFreelancerPaymentMarked(
+        bookingWithDetails.freelancer.freelancerProfile.whatsappNumber,
+        company.companyName,
+        updated.amount,
+        bookingWithDetails.job.title
+      );
+    }
+  } catch (error) {
+    console.error("Failed to send WhatsApp notification:", error);
+  }
+
   revalidatePath("/company/payments");
   revalidatePath(`/company/bookings/${payment.booking.id}`);
 
@@ -674,6 +771,32 @@ export async function declinePaymentRequest(data: {
     })
     .where(eq(payments.id, data.paymentId))
     .returning();
+
+  // Send WhatsApp notification to freelancer about declined payment
+  try {
+    const bookingWithDetails = await db.query.bookingRequests.findFirst({
+      where: eq(bookingRequests.id, payment.booking.id),
+      with: {
+        job: true,
+        freelancer: {
+          with: {
+            freelancerProfile: true,
+          },
+        },
+      },
+    });
+
+    if (bookingWithDetails?.freelancer?.freelancerProfile?.whatsappNumber) {
+      await notifyFreelancerPaymentDeclined(
+        bookingWithDetails.freelancer.freelancerProfile.whatsappNumber,
+        updated.amount,
+        bookingWithDetails.job.title,
+        data.reason
+      );
+    }
+  } catch (error) {
+    console.error("Failed to send WhatsApp notification:", error);
+  }
 
   revalidatePath("/company/payments");
 

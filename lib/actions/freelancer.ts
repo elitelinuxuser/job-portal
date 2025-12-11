@@ -13,6 +13,10 @@ import { requireRole, updateUserMetadata } from "@/lib/auth";
 import { auth } from "@clerk/nextjs/server";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import {
+  notifyCompanyFreelancerInterested,
+  notifyCompanyPaymentConfirmed,
+} from "@/lib/wasender";
 
 export async function createFreelancerProfile(data: {
   name: string;
@@ -162,6 +166,35 @@ export async function respondToJob(data: {
       proposedPrice: data.proposedPrice,
     })
     .returning();
+
+  // Send WhatsApp notification to company if freelancer is interested
+  if (data.status === "interested") {
+    try {
+      // Get job details with company info
+      const job = await db.query.jobPosts.findFirst({
+        where: eq(jobPosts.id, data.jobId),
+        with: {
+          company: {
+            with: {
+              companyProfile: true,
+            },
+          },
+        },
+      });
+
+      if (job?.company?.companyProfile?.whatsappNumber) {
+        await notifyCompanyFreelancerInterested(
+          job.company.companyProfile.whatsappNumber,
+          profile.name,
+          job.title,
+          data.proposedPrice
+        );
+      }
+    } catch (error) {
+      console.error("Failed to send WhatsApp notification:", error);
+      // Don't fail the action if notification fails
+    }
+  }
 
   revalidatePath("/freelancer");
 
@@ -520,6 +553,31 @@ export async function confirmPaymentReceived(paymentId: string) {
     })
     .where(eq(payments.id, paymentId))
     .returning();
+
+  // Send WhatsApp notification to company that payment was confirmed
+  try {
+    const bookingWithDetails = await db.query.bookingRequests.findFirst({
+      where: eq(bookingRequests.id, payment.bookingId),
+      with: {
+        job: true,
+        company: {
+          with: {
+            companyProfile: true,
+          },
+        },
+      },
+    });
+
+    if (bookingWithDetails?.company?.companyProfile?.whatsappNumber) {
+      await notifyCompanyPaymentConfirmed(
+        bookingWithDetails.company.companyProfile.whatsappNumber,
+        updated.amount,
+        bookingWithDetails.job.title
+      );
+    }
+  } catch (error) {
+    console.error("Failed to send WhatsApp notification:", error);
+  }
 
   revalidatePath("/freelancer/payments");
 

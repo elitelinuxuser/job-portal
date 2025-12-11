@@ -81,6 +81,11 @@ DATABASE_URL=postgresql://user:password@host/db
 
 # Vercel Blob
 BLOB_READ_WRITE_TOKEN=vercel_blob_xxxxx
+
+# WasenderAPI (WhatsApp Notifications - Optional)
+WASENDER_API_KEY=your_session_api_key
+WASENDER_PERSONAL_ACCESS_TOKEN=your_personal_access_token
+WASENDER_WEBHOOK_SECRET=your_webhook_secret
 ```
 
 ## Step 6: Push Database Schema
@@ -130,22 +135,64 @@ Open [http://localhost:3000](http://localhost:3000)
 4. Update Clerk webhook URL to production domain
 5. Deploy!
 
+## Step 10: Set Up WasenderAPI (Optional - WhatsApp Notifications)
+
+WasenderAPI enables WhatsApp notifications for platform activities like booking requests, payment updates, and profile verifications.
+
+### 1. Create WasenderAPI Account
+
+1. Go to [WasenderAPI](https://www.wasenderapi.com)
+2. Create an account and set up a WhatsApp session
+3. Connect your WhatsApp number by scanning the QR code
+
+### 2. Get API Credentials
+
+1. In WasenderAPI Dashboard, go to **Sessions**
+2. Copy the **API Key** for your session
+3. Go to **Settings** → **Personal Access Token** for account-level operations
+4. Copy the **Webhook Secret** if you want to receive incoming messages
+
+### 3. Configure Environment Variables
+
+Add to your `.env.local`:
+
+```env
+WASENDER_API_KEY=your_session_api_key
+WASENDER_PERSONAL_ACCESS_TOKEN=your_personal_access_token
+WASENDER_WEBHOOK_SECRET=your_webhook_secret
+```
+
+### 4. Configure Webhook (Optional)
+
+To receive incoming WhatsApp messages:
+
+1. In WasenderAPI Dashboard, go to **Webhooks**
+2. Set endpoint URL: `https://your-domain.com/api/webhooks/wasender`
+3. Copy the signing secret and add as `WASENDER_WEBHOOK_SECRET`
+
+### Notifications Sent
+
+The platform sends WhatsApp notifications for:
+
+- **Freelancers**: New booking requests, payment marked, payment declined, job completed, profile verified/rejected
+- **Companies**: Freelancer interest in jobs, payment confirmed by freelancer
+
 ## Troubleshooting
 
 ### Webhook Issues
+
 - Ensure webhook URL is publicly accessible
 - Check signing secret matches `.env.local`
 - View webhook logs in Clerk Dashboard
 
 ### Database Connection Issues
+
 - Verify `DATABASE_URL` is correct
 - Ensure Neon project is active
 - Check IP allowlisting in Neon settings
 
 ### Authentication Issues
+
 - Clear browser cache and cookies
 - Verify all Clerk environment variables
 - Check Clerk Dashboard for error logs
-
-
-
