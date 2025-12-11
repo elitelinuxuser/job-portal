@@ -28,14 +28,9 @@ function formatPhoneNumber(phone: string): string {
   // Remove any non-digit characters except +
   let cleaned = phone.replace(/[^\d+]/g, "");
 
-  // If starts with +, remove it (wasender expects without +)
-  if (cleaned.startsWith("+")) {
-    cleaned = cleaned.substring(1);
-  }
-
-  // If it's an Indian number without country code, add 91
+  // If it's an Indian number without country code, add +91
   if (cleaned.length === 10) {
-    cleaned = "91" + cleaned;
+    cleaned = "+91" + cleaned;
   }
 
   return cleaned;
