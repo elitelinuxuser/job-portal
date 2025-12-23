@@ -182,7 +182,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           </Card>
 
           {/* Response Section - Desktop */}
-          {!hasResponded ? (
+          {!hasResponded && isVerified ? (
             <Card className="hidden md:block rounded-none sm:rounded-lg border-x-0 sm:border-x shadow-none sm:shadow-lg">
               <CardHeader>
                 <CardTitle className="text-xl flex items-center gap-2">
@@ -192,6 +192,20 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               </CardHeader>
               <CardContent>
                 <RespondToJobForm jobId={job.id} originalBudget={job.budget} />
+              </CardContent>
+            </Card>
+          ) : !hasResponded && !isVerified ? (
+            <Card className="hidden md:block rounded-none sm:rounded-lg border-x-0 sm:border-x shadow-none sm:shadow-lg">
+              <CardHeader className="bg-amber-50 border-b border-amber-200">
+                <CardTitle className="text-xl flex items-center gap-2 text-amber-800">
+                  <Shield className="w-5 h-5" />
+                  Profile Under Review
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <p className="text-gray-600">
+                  Your profile is currently being reviewed. You&apos;ll be able to apply for jobs once your profile is verified.
+                </p>
               </CardContent>
             </Card>
           ) : myResponse ? (
