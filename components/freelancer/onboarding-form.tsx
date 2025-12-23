@@ -192,8 +192,11 @@ export function FreelancerOnboardingForm() {
         .filter((p) => p.trim() !== '')
         .map(normalizeUrl)
 
+      const serializableData = { ...data } as Record<string, unknown>
+      delete serializableData.idProof
+
       const result = await createFreelancerProfile({
-        ...data,
+        ...(serializableData as unknown as FormData),
         photoUrl,
         idProofUrl,
         equipmentList: validEquipment,
