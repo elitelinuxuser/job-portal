@@ -23,6 +23,7 @@ import {
 import { format } from 'date-fns'
 import { withdrawApplication } from '@/lib/actions/freelancer'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { getJobTypeLabel, JobType } from '@/lib/constants/job-types'
 import {
   AlertDialog,
@@ -171,7 +172,10 @@ export function ApplicationsList({ applications }: ApplicationsListProps) {
                     <div className="flex items-center gap-2 text-gray-600 mb-3">
                       <Building2 className="w-4 h-4 shrink-0" />
                       <span className="font-medium truncate">
-                        {application.job.company.companyProfile?.companyName || 'Company'}
+                        {application.job.bookingRequests.length > 0 
+                          ? (application.job.company.companyProfile?.companyName || 'Company')
+                          : 'Verified Company'
+                        }
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -260,7 +264,7 @@ export function ApplicationsList({ applications }: ApplicationsListProps) {
                           {format(new Date(application.createdAt), 'MMM d, yyyy \'at\' h:mm a')}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          Your application was successfully submitted to {application.job.company.companyProfile?.companyName || 'the company'}
+                          Your application was successfully submitted to the company
                         </p>
                       </div>
                     </div>
@@ -292,10 +296,10 @@ export function ApplicationsList({ applications }: ApplicationsListProps) {
                               className="mt-2 h-8 text-xs"
                               asChild
                             >
-                              <a href="/freelancer/bookings">
+                              <Link href="/freelancer/bookings">
                                 <ArrowRight className="w-3 h-3 mr-1" />
                                 View Booking Details
-                              </a>
+                              </Link>
                             </Button>
                           )}
                         </div>

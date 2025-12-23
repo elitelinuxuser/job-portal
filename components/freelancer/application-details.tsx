@@ -188,7 +188,10 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
                   <div className="flex items-center gap-2 text-gray-600">
                     <Building2 className="w-4 h-4 shrink-0" />
                     <span className="font-medium">
-                      {application.job.company.companyProfile?.companyName || 'Company'}
+                      {application.job.bookingRequests.length > 0 
+                        ? (application.job.company.companyProfile?.companyName || 'Company')
+                        : 'Verified Company'
+                      }
                     </span>
                   </div>
                   
@@ -374,7 +377,7 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
                         {format(new Date(application.createdAt), 'MMM d, yyyy \'at\' h:mm a')}
                       </p>
                       <p className="text-xs text-gray-700">
-                        Your application was successfully submitted to <span className="font-medium text-gray-900">{application.job.company.companyProfile?.companyName || 'the company'}</span>
+                        Your application was successfully submitted to <span className="font-medium text-gray-900">the company</span>
                       </p>
                     </div>
                   </div>

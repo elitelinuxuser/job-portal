@@ -153,7 +153,7 @@ export default async function FreelancerDashboard() {
                         </CardTitle>
                         <CardDescription className="flex items-center gap-1 mt-1">
                           <Building2 className="w-3 h-3" />
-                          {job.company.companyProfile?.companyName || 'Company'}
+                          Verified Company
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-2">

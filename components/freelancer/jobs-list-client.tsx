@@ -151,7 +151,7 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
                       </div>
                     <CardDescription className="flex items-center gap-2">
                       <Building2 className="w-4 h-4" />
-                      <span>{job.company?.companyProfile?.companyName || 'Company'}</span>
+                      <span>Verified Company</span>
                     </CardDescription>
                     <p className="text-gray-600 line-clamp-2 mt-3">{job.description}</p>
                   </div>

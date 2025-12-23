@@ -52,7 +52,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-2">{job.title}</h1>
                 <div className="flex items-center gap-2 text-gray-600">
                   <Building2 className="w-4 h-4 shrink-0" />
-                  <span className="font-medium">{job.company.companyProfile?.companyName || 'Company'}</span>
+                  <span className="font-medium">Verified Company</span>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 pt-2">
