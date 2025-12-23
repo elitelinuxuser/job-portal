@@ -45,6 +45,14 @@ export function OnboardingForm() {
     resolver: zodResolver(schema),
   })
 
+  function buildBlobPath(kind: 'logo' | 'proof', file: File) {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const unique = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+    return `company/${kind}/${unique}-${safeName}`
+  }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -94,7 +102,7 @@ export function OnboardingForm() {
 
       // Upload logo if provided
       if (logoFile) {
-        const blob = await upload(logoFile.name, logoFile, {
+        const blob = await upload(buildBlobPath('logo', logoFile), logoFile, {
           access: 'public',
           handleUploadUrl: '/api/upload',
         })
@@ -103,7 +111,7 @@ export function OnboardingForm() {
 
       // Upload proof of ownership if provided
       if (proofFile) {
-        const blob = await upload(proofFile.name, proofFile, {
+        const blob = await upload(buildBlobPath('proof', proofFile), proofFile, {
           access: 'public',
           handleUploadUrl: '/api/upload',
         })

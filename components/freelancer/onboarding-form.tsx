@@ -61,6 +61,14 @@ export function FreelancerOnboardingForm() {
     mode: 'onChange', // Validate on change
   })
 
+  function buildBlobPath(kind: 'photo' | 'id-proof', file: File) {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const unique = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+    return `freelancer/${kind}/${unique}-${safeName}`
+  }
+
   function addEquipment() {
     setEquipment([...equipment, ''])
   }
@@ -163,7 +171,7 @@ export function FreelancerOnboardingForm() {
 
       // Upload photo if provided
       if (photoFile) {
-        const blob = await upload(photoFile.name, photoFile, {
+        const blob = await upload(buildBlobPath('photo', photoFile), photoFile, {
           access: 'public',
           handleUploadUrl: '/api/upload',
         })
@@ -171,7 +179,7 @@ export function FreelancerOnboardingForm() {
       }
 
       // Upload ID proof
-      const idProofBlob = await upload(idProofFile.name, idProofFile, {
+      const idProofBlob = await upload(buildBlobPath('id-proof', idProofFile), idProofFile, {
         access: 'public',
         handleUploadUrl: '/api/upload',
       })
