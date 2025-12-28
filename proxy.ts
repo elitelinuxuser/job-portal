@@ -8,7 +8,12 @@ import { db } from "@/lib/db";
 import { companyProfiles, freelancerProfiles } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/api/webhooks(.*)",
+]);
 const isRoleSelectionRoute = createRouteMatcher(["/role-selection"]);
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isCompanyRoute = createRouteMatcher(["/company(.*)"]);

@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { UserButton } from '@clerk/nextjs'
 import { 
-  Briefcase, 
   Calendar, 
   Search,
   Menu,
@@ -22,17 +22,18 @@ export function FreelancerNav() {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo & Brand */}
           <Link href="/freelancer" className="flex items-center space-x-3 group">
-            <div className="relative">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-linear-to-br from-blue-600 via-blue-500 to-cyan-500 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                <Briefcase className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 md:w-4 md:h-4 bg-cyan-400 rounded-full border-2 border-white"></div>
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="text-lg md:text-xl font-bold bg-linear-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
-                CreativeGigs
+            <Image 
+              src="/logo.svg" 
+              alt="HFree" 
+              width={44} 
+              height={44} 
+              className="rounded-xl group-hover:scale-105 transition-transform duration-300" 
+            />
+            <div>
+              <h1 className="text-lg md:text-xl font-bold text-slate-800">
+                HFree
               </h1>
-              <p className="text-xs text-gray-600 font-medium">Find your next project</p>
+              <p className="hidden sm:block text-xs text-gray-600 font-medium">Freelancer Portal</p>
             </div>
           </Link>
 

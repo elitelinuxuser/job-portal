@@ -1,11 +1,12 @@
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import { LandingPage } from '@/components/landing/landing-page'
 
 export default async function HomePage() {
   const { userId, sessionClaims } = await auth()
 
   if (!userId) {
-    redirect('/sign-in')
+    return <LandingPage />
   }
 
   // Get role from session claims first (faster)
