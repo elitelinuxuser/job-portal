@@ -32,7 +32,7 @@ export default async function Image() {
             left: "15%",
             width: "300px",
             height: "300px",
-            background: "rgba(245, 158, 11, 0.15)",
+            background: "rgba(33, 28, 116, 0.3)",
             borderRadius: "50%",
             filter: "blur(80px)",
           }}
@@ -44,7 +44,7 @@ export default async function Image() {
             right: "15%",
             width: "300px",
             height: "300px",
-            background: "rgba(244, 63, 94, 0.15)",
+            background: "rgba(47, 72, 148, 0.3)",
             borderRadius: "50%",
             filter: "blur(80px)",
           }}
@@ -92,7 +92,7 @@ export default async function Image() {
               style={{
                 width: "80px",
                 height: "80px",
-                background: "linear-gradient(135deg, #f59e0b 0%, #f43f5e 100%)",
+                background: "linear-gradient(135deg, #211c74 0%, #2f4894 100%)",
                 borderRadius: "20px",
                 display: "flex",
                 alignItems: "center",
@@ -135,7 +135,7 @@ export default async function Image() {
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              background: "linear-gradient(135deg, #f59e0b 0%, #f43f5e 100%)",
+              background: "linear-gradient(135deg, #211c74 0%, #2f4894 100%)",
               borderRadius: "50px",
               padding: "16px 32px",
             }}

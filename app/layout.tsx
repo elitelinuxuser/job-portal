@@ -45,16 +45,25 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: "/",
     siteName: "HFree",
-    title: "HFree - Hire Verified Wedding Professionals",
+    title: "HFree - Connecting Wedding Professionals",
     description:
       "The platform connecting wedding companies with verified photographers, videographers & specialists. Fast, efficient, and professional hiring. First 100 users get 1 year FREE!",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "HFree - Wedding Industry Freelancer Platform",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "HFree - Hire Verified Wedding Professionals",
+    title: "HFree - Connecting Wedding Professionals",
     description:
       "Connect with verified wedding photographers, videographers & specialists. First 100 users get 1 year FREE!",
     creator: "@hfree",
+    images: ["/twitter-image"],
   },
   robots: {
     index: true,
