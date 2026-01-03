@@ -14,8 +14,10 @@ import {
   Briefcase,
   IndianRupee,
   ChevronDown,
-  Check
+  Check,
+  Calendar
 } from 'lucide-react'
+import { parseISO, isWithinInterval, startOfDay, endOfDay, format } from 'date-fns'
 import {
   Sheet,
   SheetContent,
@@ -43,6 +45,8 @@ export interface FilterState {
   jobTypes: JobType[]
   minBudget: string
   maxBudget: string
+  eventDateFrom: string
+  eventDateTo: string
   sortBy: 'recent' | 'budget-high' | 'budget-low' | 'dates'
 }
 
@@ -63,6 +67,8 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
     jobTypes: [],
     minBudget: '',
     maxBudget: '',
+    eventDateFrom: '',
+    eventDateTo: '',
     sortBy: 'recent'
   })
 
@@ -110,6 +116,33 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
     if (filters.maxBudget) {
       const max = parseFloat(filters.maxBudget)
       filtered = filtered.filter(job => job.budget && parseFloat(job.budget) <= max)
+    }
+
+    // Event date filter - filter jobs that have at least one event date within the range
+    if (filters.eventDateFrom || filters.eventDateTo) {
+      filtered = filtered.filter(job => {
+        if (!job.dates || job.dates.length === 0) return false
+        
+        return job.dates.some(dateEntry => {
+          try {
+            const eventDate = startOfDay(parseISO(dateEntry.date))
+            
+            if (filters.eventDateFrom && filters.eventDateTo) {
+              return isWithinInterval(eventDate, {
+                start: startOfDay(parseISO(filters.eventDateFrom)),
+                end: endOfDay(parseISO(filters.eventDateTo))
+              })
+            } else if (filters.eventDateFrom) {
+              return eventDate >= startOfDay(parseISO(filters.eventDateFrom))
+            } else if (filters.eventDateTo) {
+              return eventDate <= endOfDay(parseISO(filters.eventDateTo))
+            }
+            return true
+          } catch {
+            return false
+          }
+        })
+      })
     }
 
     // Sorting
@@ -166,6 +199,8 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
       jobTypes: [],
       minBudget: '',
       maxBudget: '',
+      eventDateFrom: '',
+      eventDateTo: '',
       sortBy: 'recent'
     };
     setFilters(initialFilters)
@@ -174,9 +209,10 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
   const activeFilterCount = 
     (filters.location.city || filters.location.state || filters.location.country ? 1 : 0) +
     (filters.jobTypes.length > 0 ? 1 : 0) +
-    (filters.minBudget || filters.maxBudget ? 1 : 0)
+    (filters.minBudget || filters.maxBudget ? 1 : 0) +
+    (filters.eventDateFrom || filters.eventDateTo ? 1 : 0)
 
-  const removeFilterChip = (type: 'location' | 'jobType' | 'budget', value?: string) => {
+  const removeFilterChip = (type: 'location' | 'jobType' | 'budget' | 'eventDate', value?: string) => {
     if (type === 'location') {
       setFilters(prev => ({ 
         ...prev, 
@@ -190,6 +226,8 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
       handleJobTypeToggle(value as JobType)
     } else if (type === 'budget') {
       setFilters(prev => ({ ...prev, minBudget: '', maxBudget: '' }))
+    } else if (type === 'eventDate') {
+      setFilters(prev => ({ ...prev, eventDateFrom: '', eventDateTo: '' }))
     }
   }
 
@@ -377,6 +415,37 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
                 </div>
               </div>
 
+              {/* Event Date Filter */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar className="w-4 h-4 text-gray-600" />
+                  <Label className="text-base font-semibold">Event Date Range</Label>
+                </div>
+                <p className="text-xs text-gray-500 mb-3">
+                  Filter jobs by when the event is scheduled
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="eventDateFrom" className="text-xs text-gray-600 mb-1">From</Label>
+                    <Input
+                      id="eventDateFrom"
+                      type="date"
+                      value={filters.eventDateFrom}
+                      onChange={(e) => setFilters(prev => ({ ...prev, eventDateFrom: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="eventDateTo" className="text-xs text-gray-600 mb-1">To</Label>
+                    <Input
+                      id="eventDateTo"
+                      type="date"
+                      value={filters.eventDateTo}
+                      onChange={(e) => setFilters(prev => ({ ...prev, eventDateTo: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Action Buttons */}
               <div className="flex gap-3 pt-6 sticky bottom-0 bg-white pb-6 border-t">
                 {activeFilterCount > 0 && (
@@ -401,7 +470,7 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
       </div>
 
       {/* Active Filter Chips */}
-      {(filters.location.city || filters.jobTypes.length > 0 || filters.minBudget || filters.maxBudget) && (
+      {(filters.location.city || filters.jobTypes.length > 0 || filters.minBudget || filters.maxBudget || filters.eventDateFrom || filters.eventDateTo) && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-gray-600">Active filters:</span>
           
@@ -438,6 +507,23 @@ export function JobFilters({ jobs, onFilterChange }: JobFiltersProps) {
             >
               <IndianRupee className="w-3 h-3" />
               ₹{filters.minBudget || '0'} - ₹{filters.maxBudget || '∞'}
+              <X className="w-3 h-3 ml-1" />
+            </Badge>
+          )}
+
+          {(filters.eventDateFrom || filters.eventDateTo) && (
+            <Badge 
+              variant="secondary" 
+              className="gap-1 pr-1 pl-3 py-1.5 cursor-pointer hover:bg-gray-200"
+              onClick={() => removeFilterChip('eventDate')}
+            >
+              <Calendar className="w-3 h-3" />
+              {filters.eventDateFrom && filters.eventDateTo 
+                ? `${format(parseISO(filters.eventDateFrom), 'MMM d')} - ${format(parseISO(filters.eventDateTo), 'MMM d')}`
+                : filters.eventDateFrom 
+                  ? `From ${format(parseISO(filters.eventDateFrom), 'MMM d')}`
+                  : `Until ${format(parseISO(filters.eventDateTo), 'MMM d')}`
+              }
               <X className="w-3 h-3 ml-1" />
             </Badge>
           )}

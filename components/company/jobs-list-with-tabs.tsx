@@ -33,12 +33,13 @@ export interface Job {
   location: string
   locationFormatted?: string | null
   budget: string
-  jobType: JobType
+  jobTypes: JobType[]
   dates: Array<{ date: string; startTime?: string; endTime?: string }>
   isActive: boolean
   status: 'active' | 'completed' | 'cancelled' | 'booked'
   createdAt: Date
   responses: { id: string }[]
+  unreadResponseCount?: number
 }
 
 interface JobsListWithTabsProps {
@@ -212,7 +213,11 @@ export function JobsListWithTabs({ jobs }: JobsListWithTabsProps) {
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs text-gray-500">Type</p>
-                            <p className="font-medium text-gray-900 truncate">{getJobTypeLabel(job.jobType)}</p>
+                            {job.jobTypes.length > 0 && (
+                              <p className="font-medium text-gray-900 truncate">
+                                {getJobTypeLabel(job.jobTypes[0])}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 text-sm">
@@ -231,10 +236,20 @@ export function JobsListWithTabs({ jobs }: JobsListWithTabsProps) {
                           <span className="text-gray-500">
                             Posted {format(new Date(job.createdAt), 'MMM d, yyyy')}
                           </span>
-                          <div className="flex items-center gap-1 text-gray-700">
-                            <MessageSquare className="w-4 h-4" />
-                            <span className="font-semibold">{job.responses.length}</span>
-                            <span>response{job.responses.length !== 1 ? 's' : ''}</span>
+                          <div className="flex items-center gap-1.5">
+                            <div className="relative">
+                              <MessageSquare className="w-4 h-4 text-gray-700" />
+                              {(job.unreadResponseCount ?? 0) > 0 && (
+                                <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+                              )}
+                            </div>
+                            <span className="font-semibold text-gray-700">{job.responses.length}</span>
+                            <span className="text-gray-700">response{job.responses.length !== 1 ? 's' : ''}</span>
+                            {(job.unreadResponseCount ?? 0) > 0 && (
+                              <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0 h-5">
+                                {job.unreadResponseCount} new
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         <div className="flex gap-2">

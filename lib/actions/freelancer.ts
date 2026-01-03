@@ -16,6 +16,9 @@ import { revalidatePath } from "next/cache";
 import {
   notifyCompanyFreelancerInterested,
   notifyCompanyPaymentConfirmed,
+  notifyCompanyBookingAccepted,
+  notifyCompanyBookingRejected,
+  notifyCompanyPaymentRequested,
 } from "@/lib/wasender";
 
 export async function createFreelancerProfile(data: {
@@ -218,6 +221,7 @@ export async function respondToJob(data: {
           job.company.companyProfile.whatsappNumber,
           profile.name,
           job.title,
+          job.id,
           data.proposedPrice
         );
       }
@@ -306,6 +310,56 @@ export async function respondToBooking(data: {
       .where(eq(jobPosts.id, booking.jobId));
   }
 
+  // Send WhatsApp notification to company about booking response
+  try {
+    const bookingWithDetails = await db.query.bookingRequests.findFirst({
+      where: eq(bookingRequests.id, data.bookingId),
+      with: {
+        job: true,
+        company: {
+          with: {
+            companyProfile: true,
+          },
+        },
+        freelancer: {
+          with: {
+            freelancerProfile: true,
+          },
+        },
+      },
+    });
+
+    if (
+      bookingWithDetails?.company?.companyProfile?.whatsappNumber &&
+      bookingWithDetails?.freelancer?.freelancerProfile
+    ) {
+      const freelancerName =
+        bookingWithDetails.freelancer.freelancerProfile.name;
+      const jobTitle = bookingWithDetails.job.title;
+      const companyPhone =
+        bookingWithDetails.company.companyProfile.whatsappNumber;
+
+      if (data.accept) {
+        await notifyCompanyBookingAccepted(
+          companyPhone,
+          freelancerName,
+          jobTitle,
+          data.bookingId
+        );
+      } else {
+        await notifyCompanyBookingRejected(
+          companyPhone,
+          freelancerName,
+          jobTitle,
+          bookingWithDetails.job.id,
+          data.rejectionReason
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Failed to send WhatsApp notification:", error);
+  }
+
   revalidatePath("/freelancer/bookings");
   revalidatePath(`/freelancer/bookings/${data.bookingId}`);
   revalidatePath("/company");
@@ -352,9 +406,46 @@ export async function requestPayment(data: {
     })
     .returning();
 
+  // Send WhatsApp notification to company about payment request
+  try {
+    const bookingWithDetails = await db.query.bookingRequests.findFirst({
+      where: eq(bookingRequests.id, data.bookingId),
+      with: {
+        job: true,
+        company: {
+          with: {
+            companyProfile: true,
+          },
+        },
+        freelancer: {
+          with: {
+            freelancerProfile: true,
+          },
+        },
+      },
+    });
+
+    if (
+      bookingWithDetails?.company?.companyProfile?.whatsappNumber &&
+      bookingWithDetails?.freelancer?.freelancerProfile
+    ) {
+      await notifyCompanyPaymentRequested(
+        bookingWithDetails.company.companyProfile.whatsappNumber,
+        bookingWithDetails.freelancer.freelancerProfile.name,
+        data.amount.toString(),
+        bookingWithDetails.job.title,
+        data.bookingId
+      );
+    }
+  } catch (error) {
+    console.error("Failed to send WhatsApp notification:", error);
+  }
+
   revalidatePath("/freelancer/bookings");
   revalidatePath(`/freelancer/bookings/${data.bookingId}`);
   revalidatePath("/freelancer/payments");
+  revalidatePath("/company/bookings");
+  revalidatePath("/company/payments");
 
   return { success: true, payment };
 }
@@ -618,7 +709,8 @@ export async function confirmPaymentReceived(paymentId: string) {
       await notifyCompanyPaymentConfirmed(
         bookingWithDetails.company.companyProfile.whatsappNumber,
         updated.amount,
-        bookingWithDetails.job.title
+        bookingWithDetails.job.title,
+        bookingWithDetails.id
       );
     }
   } catch (error) {

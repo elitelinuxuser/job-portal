@@ -7,6 +7,7 @@ import {
   bookingRequests,
   payments,
   companyProfiles,
+  users,
 } from "@/lib/db/schema";
 import { requireRole } from "@/lib/auth";
 import { auth } from "@clerk/nextjs/server";
@@ -108,9 +109,15 @@ export async function getCompanyJobs() {
         })
       );
 
+      // Count unread responses (viewedAt is null)
+      const unreadResponseCount = responsesWithBookings.filter(
+        (r) => r.viewedAt === null
+      ).length;
+
       return {
         ...job,
         responses: responsesWithBookings,
+        unreadResponseCount,
       };
     })
   );
@@ -248,7 +255,7 @@ export async function createBookingRequest(data: {
   // Send WhatsApp notification to freelancer about booking request
   try {
     const freelancer = await db.query.users.findFirst({
-      where: eq(jobPosts.companyId, data.freelancerId),
+      where: eq(users.id, data.freelancerId),
       with: {
         freelancerProfile: true,
       },
@@ -269,7 +276,8 @@ export async function createBookingRequest(data: {
         freelancer.freelancerProfile.whatsappNumber,
         company.companyName,
         job.title,
-        datesStr
+        datesStr,
+        booking.id
       );
     }
   } catch (error) {
@@ -540,7 +548,7 @@ export async function completeJob(jobId: string) {
   try {
     if (job.bookedFreelancerId) {
       const freelancer = await db.query.users.findFirst({
-        where: eq(jobPosts.companyId, job.bookedFreelancerId),
+        where: eq(users.id, job.bookedFreelancerId),
         with: {
           freelancerProfile: true,
         },
@@ -550,11 +558,17 @@ export async function completeJob(jobId: string) {
         where: eq(companyProfiles.userId, userId),
       });
 
-      if (freelancer?.freelancerProfile?.whatsappNumber && company) {
+      // Get the booking for this job
+      const booking = await db.query.bookingRequests.findFirst({
+        where: eq(bookingRequests.jobId, jobId),
+      });
+
+      if (freelancer?.freelancerProfile?.whatsappNumber && company && booking) {
         await notifyJobCompleted(
           freelancer.freelancerProfile.whatsappNumber,
           job.title,
-          company.companyName
+          company.companyName,
+          booking.id
         );
       }
     }
@@ -708,7 +722,8 @@ export async function payPaymentRequest(data: {
         bookingWithDetails.freelancer.freelancerProfile.whatsappNumber,
         company.companyName,
         updated.amount,
-        bookingWithDetails.job.title
+        bookingWithDetails.job.title,
+        bookingWithDetails.id
       );
     }
   } catch (error) {
@@ -778,6 +793,7 @@ export async function declinePaymentRequest(data: {
         bookingWithDetails.freelancer.freelancerProfile.whatsappNumber,
         updated.amount,
         bookingWithDetails.job.title,
+        bookingWithDetails.id,
         data.reason
       );
     }
