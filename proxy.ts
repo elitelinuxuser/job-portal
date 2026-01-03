@@ -12,6 +12,7 @@ const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/terms",
   "/api/webhooks(.*)",
 ]);
 const isRoleSelectionRoute = createRouteMatcher(["/role-selection"]);
