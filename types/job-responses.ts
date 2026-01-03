@@ -40,11 +40,9 @@ export interface JobPost {
   locationPlaceId: string | null;
   budget: string | null;
   jobTypes: JobType[];
-  contractContentPosting: boolean;
-  contractAdvancePayment: boolean;
-  contractPaymentAfterShot: boolean;
-  contractContentOwnership: boolean;
-  contractSdCard: boolean;
+  // Contract terms stored as JSONB array of term IDs
+  // See lib/constants/contract-terms.ts for available terms
+  contractTerms: string[] | null;
   contractAdditionalDetails: string | null;
   isActive: boolean;
   createdAt: Date;
@@ -54,6 +52,20 @@ export interface JobPost {
       companyName?: string;
     };
   };
+}
+
+// Contract Details stored in booking requests
+export interface ContractDetails {
+  title: string;
+  description: string;
+  dates: Array<{ date: string; startTime?: string; endTime?: string }>;
+  location: string;
+  budget: string | number | null;
+  jobTypes: JobType[];
+  // Contract terms stored as array of term IDs (extensible format)
+  // See lib/constants/contract-terms.ts for available terms
+  contractTerms: string[];
+  contractAdditionalDetails: string | null;
 }
 
 // Booking Request
@@ -66,7 +78,8 @@ export interface BookingRequest {
   rejectionReason?: string | null;
   createdAt: Date;
   updatedAt: Date;
-  contractDetails?: any;
+  // contractDetails is stored as JSONB and may be unknown from DB queries
+  contractDetails?: ContractDetails | unknown;
 }
 
 // Job Response

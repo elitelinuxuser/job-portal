@@ -6,7 +6,8 @@ import {
   LayoutDashboard, 
   Users, 
   BarChart3,
-  CheckCircle
+  CheckCircle,
+  Flag
 } from 'lucide-react'
 
 export default async function AdminLayout({
@@ -19,6 +20,7 @@ export default async function AdminLayout({
   const navItems = [
     { href: '/admin', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard' },
     { href: '/admin/approvals', icon: <CheckCircle className="w-5 h-5" />, label: 'Approvals' },
+    { href: '/admin/reports', icon: <Flag className="w-5 h-5" />, label: 'Reports' },
     { href: '/admin/users', icon: <Users className="w-5 h-5" />, label: 'Users' },
     { href: '/admin/metrics', icon: <BarChart3 className="w-5 h-5" />, label: 'Metrics' },
   ]

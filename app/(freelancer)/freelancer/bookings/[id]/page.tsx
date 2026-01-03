@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { getSelectedContractTerms } from '@/lib/constants/contract-terms'
 import { db } from '@/lib/db'
 import { bookingRequests } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
@@ -271,36 +272,12 @@ export default async function FreelancerBookingDetailsPage({
                 Contract Terms
               </h2>
               <div className="grid sm:grid-cols-2 gap-3">
-                {contract.contractContentPosting && (
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                {getSelectedContractTerms(contract.contractTerms as string[] | null).map((term) => (
+                  <div key={term.id} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
                     <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">Content Posting Rights</span>
+                    <span className="text-sm font-medium text-gray-900">{term.label}</span>
                   </div>
-                )}
-                {contract.contractAdvancePayment && (
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">Advance Payment</span>
-                  </div>
-                )}
-                {contract.contractPaymentAfterShot && (
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">Payment After Shot</span>
-                  </div>
-                )}
-                {contract.contractContentOwnership && (
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">Content Ownership</span>
-                  </div>
-                )}
-                {contract.contractSdCard && (
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">SD Card Handover</span>
-                  </div>
-                )}
+                ))}
               </div>
               {contract.contractAdditionalDetails && (
                 <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">

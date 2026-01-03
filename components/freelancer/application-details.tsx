@@ -19,14 +19,13 @@ import {
   XCircle,
   ArrowRight,
   Package,
-  ArrowLeft,
-  Shield,
-  Award
+  ArrowLeft
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { withdrawApplication } from '@/lib/actions/freelancer'
 import { useRouter } from 'next/navigation'
 import { getJobTypeLabel, JobType } from '@/lib/constants/job-types'
+import { getSelectedContractTerms } from '@/lib/constants/contract-terms'
 import Link from 'next/link'
 import {
   AlertDialog,
@@ -52,14 +51,11 @@ interface Application {
     description: string
     budget: string | null
     location: string
+    locationFormatted?: string | null
     jobTypes: JobType[]
     dates: Array<{ date: string }>
     isActive: boolean
-    contractContentPosting: boolean | null
-    contractAdvancePayment: boolean | null
-    contractPaymentAfterShot: boolean | null
-    contractContentOwnership: boolean | null
-    contractSdCard: boolean | null
+    contractTerms: string[] | null
     contractAdditionalDetails: string | null
     company: {
       id: string
@@ -260,7 +256,7 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-blue-700 font-medium">Location</p>
                     <p className="text-gray-900 text-sm wrap-break-word">
-                      {application.job.location}
+                      {application.job.locationFormatted || application.job.location}
                     </p>
                   </div>
                 </div>
@@ -298,46 +294,18 @@ export function ApplicationDetails({ application }: ApplicationDetailsProps) {
             </div>
 
             {/* Contract Terms */}
-            {(application.job.contractContentPosting || 
-              application.job.contractAdvancePayment || 
-              application.job.contractPaymentAfterShot || 
-              application.job.contractContentOwnership || 
-              application.job.contractSdCard) && (
+            {application.job.contractTerms && application.job.contractTerms.length > 0 && (
               <div className="border-t pt-4">
                 <h2 className="font-semibold text-lg mb-2 text-gray-900 flex items-center gap-2">
                   Contract Terms
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {application.job.contractContentPosting && (
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                  {getSelectedContractTerms(application.job.contractTerms).map((term) => (
+                    <div key={term.id} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
                       <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                      <span className="text-sm font-medium text-gray-900">Content Posting Rights</span>
+                      <span className="text-sm font-medium text-gray-900">{term.label}</span>
                     </div>
-                  )}
-                  {application.job.contractAdvancePayment && (
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                      <span className="text-sm font-medium text-gray-900">Advance Payment</span>
-                    </div>
-                  )}
-                  {application.job.contractPaymentAfterShot && (
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                      <span className="text-sm font-medium text-gray-900">Payment After Shot</span>
-                    </div>
-                  )}
-                  {application.job.contractContentOwnership && (
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                      <span className="text-sm font-medium text-gray-900">Content Ownership</span>
-                    </div>
-                  )}
-                  {application.job.contractSdCard && (
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                      <span className="text-sm font-medium text-gray-900">SD Card Handover</span>
-                    </div>
-                  )}
+                  ))}
                 </div>
                 {application.job.contractAdditionalDetails && (
                   <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">

@@ -31,6 +31,7 @@ export interface Job {
   title: string
   description: string
   location: string
+  locationFormatted?: string | null
   budget: string
   jobType: JobType
   dates: Array<{ date: string; startTime?: string; endTime?: string }>
@@ -202,7 +203,7 @@ export function JobsListWithTabs({ jobs }: JobsListWithTabsProps) {
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs text-gray-500">Location</p>
-                            <p className="font-medium text-gray-900 truncate">{job.location}</p>
+                            <p className="font-medium text-gray-900 truncate">{job.locationFormatted || job.location}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 text-sm">

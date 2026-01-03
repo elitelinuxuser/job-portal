@@ -32,7 +32,8 @@ export function SendBookingRequest({
   const [loading, setLoading] = useState(false)
 
   // Use proposedPrice if available, otherwise use jobBudget
-  const defaultBudget = bookingRequest?.contractDetails?.budget ?? proposedPrice ?? jobBudget
+  const contract = bookingRequest?.contractDetails as { budget?: string | number | null } | undefined
+  const defaultBudget = contract?.budget ?? proposedPrice ?? jobBudget
   const [customBudget, setCustomBudget] = useState<string>(defaultBudget.toString())
 
   async function handleSend() {

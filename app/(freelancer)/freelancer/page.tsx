@@ -159,7 +159,7 @@ export default async function FreelancerDashboard() {
                       <CardContent className="space-y-2">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <MapPin className="w-4 h-4 shrink-0" />
-                          <span className="line-clamp-1">{job.location}</span>
+                          <span className="line-clamp-1">{job.locationFormatted || job.location}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Calendar className="w-4 h-4 shrink-0" />

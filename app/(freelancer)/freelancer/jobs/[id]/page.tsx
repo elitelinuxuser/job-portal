@@ -1,4 +1,5 @@
 import { getJobById, hasRespondedToJob, getMyJobResponse, getFreelancerProfile } from '@/lib/actions/freelancer'
+import { getSelectedContractTerms } from '@/lib/constants/contract-terms'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { RespondToJobForm } from '@/components/freelancer/respond-to-job-form'
@@ -20,6 +21,8 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { getJobTypeLabel } from '@/lib/constants/job-types'
+import { LocationLink } from '@/components/shared/location-link'
+import { ReportDialog } from '@/components/shared/report-dialog'
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -40,13 +43,20 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           {/* Header Card - Mobile Optimized */}
           <Card className="rounded-none sm:rounded-lg border-t-4 border-t-blue-600 border-x-0 sm:border-x shadow-none sm:shadow-lg">
             <CardHeader className="space-y-2">
-              {/* Back Button Integrated */}
-              <Link href="/freelancer">
-                <Button variant="ghost" size="sm" className="gap-2 -ml-2 hover:bg-gray-100 text-gray-600">
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Back to Jobs</span>
-                </Button>
-              </Link>
+              {/* Back Button and Report */}
+              <div className="flex items-center justify-between">
+                <Link href="/freelancer">
+                  <Button variant="ghost" size="sm" className="gap-2 -ml-2 hover:bg-gray-100 text-gray-600">
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back to Jobs</span>
+                  </Button>
+                </Link>
+                <ReportDialog
+                  reportType="job_post"
+                  targetId={job.id}
+                  targetName={job.title}
+                />
+              </div>
 
               <div>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-2">{job.title}</h1>
@@ -94,7 +104,13 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-blue-700 font-medium">Location</p>
-                      <p className="font-semibold text-gray-900 text-sm wrap-break-word">{job.location}</p>
+                      <LocationLink
+                        location={job.locationFormatted || job.location}
+                        latitude={job.locationLatitude}
+                        longitude={job.locationLongitude}
+                        placeId={job.locationPlaceId}
+                        className="font-semibold text-gray-900 text-sm"
+                      />
                     </div>
                   </div>
 
@@ -135,36 +151,12 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                   Contract Terms
                 </h2>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {job.contractContentPosting && (
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                  {getSelectedContractTerms(job.contractTerms as string[] | null).map((term) => (
+                    <div key={term.id} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
                       <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                      <span className="text-sm font-medium text-gray-900">Content Posting Rights</span>
+                      <span className="text-sm font-medium text-gray-900">{term.label}</span>
                     </div>
-                  )}
-                  {job.contractAdvancePayment && (
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                      <span className="text-sm font-medium text-gray-900">Advance Payment</span>
-                    </div>
-                  )}
-                  {job.contractPaymentAfterShot && (
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                      <span className="text-sm font-medium text-gray-900">Payment After Shot</span>
-                    </div>
-                  )}
-                  {job.contractContentOwnership && (
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                      <span className="text-sm font-medium text-gray-900">Content Ownership</span>
-                    </div>
-                  )}
-                  {job.contractSdCard && (
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                      <span className="text-sm font-medium text-gray-900">SD Card Handover</span>
-                    </div>
-                  )}
+                  ))}
                 </div>
                 {job.contractAdditionalDetails && (
                   <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">

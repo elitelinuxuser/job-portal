@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/
 import { respondToBooking } from '@/lib/actions/freelancer'
 import { toast } from 'sonner'
 import { CheckCircle2, X, IndianRupee, AlertCircle, Shield } from 'lucide-react'
+import { getSelectedContractTerms } from '@/lib/constants/contract-terms'
 
 export function AcceptBookingSheet({
   bookingId,
@@ -110,36 +111,12 @@ export function AcceptBookingSheet({
                 <h3 className="font-semibold text-gray-900">Contract Terms</h3>
               </div>
               <div className="grid sm:grid-cols-2 gap-2">
-                {contract.contractContentPosting && (
-                  <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-200">
+                {getSelectedContractTerms(contract.contractTerms as string[] | null).map((term) => (
+                  <div key={term.id} className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-200">
                     <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                    <span className="text-xs font-medium text-gray-900">Content Posting Rights</span>
+                    <span className="text-xs font-medium text-gray-900">{term.label}</span>
                   </div>
-                )}
-                {contract.contractAdvancePayment && (
-                  <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                    <span className="text-xs font-medium text-gray-900">Advance Payment</span>
-                  </div>
-                )}
-                {contract.contractPaymentAfterShot && (
-                  <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                    <span className="text-xs font-medium text-gray-900">Payment After Shot</span>
-                  </div>
-                )}
-                {contract.contractContentOwnership && (
-                  <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                    <span className="text-xs font-medium text-gray-900">Content Ownership</span>
-                  </div>
-                )}
-                {contract.contractSdCard && (
-                  <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                    <span className="text-xs font-medium text-gray-900">SD Card Handover</span>
-                  </div>
-                )}
+                ))}
               </div>
               {contract.contractAdditionalDetails && (
                 <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">

@@ -11,7 +11,8 @@ import {
   Plus,
   Menu,
   X,
-  IndianRupee
+  IndianRupee,
+  Building2
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -76,6 +77,15 @@ export function CompanyNav() {
                 <IndianRupee className="w-4 h-4" />
               </div>
               <span>Payments</span>
+            </Link>
+            <Link 
+              href="/company/profile" 
+              className="flex items-center space-x-2 px-4 py-2.5 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-200 font-medium group"
+            >
+              <div className="w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-indigo-100 rounded-lg transition-colors">
+                <Building2 className="w-4 h-4" />
+              </div>
+              <span>Profile</span>
             </Link>
           </div>
 
@@ -157,6 +167,16 @@ export function CompanyNav() {
                 <IndianRupee className="w-5 h-5" />
               </div>
               <span className="font-medium">Payments</span>
+            </Link>
+            <Link 
+              href="/company/profile"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            >
+              <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <span className="font-medium">Profile</span>
             </Link>
             <div className="px-4 pt-2">
               <Link href="/company/post-job">

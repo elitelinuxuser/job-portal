@@ -212,8 +212,19 @@ export function LocationAutocomplete({
         }
       })
 
+      // Combine displayName with formattedAddress for better location display
+      // This ensures the venue name is included with the full address
+      const displayName = placeData.displayName || ''
+      const formattedAddress = placeData.formattedAddress || ''
+      
+      // If displayName exists and is not already part of formattedAddress, combine them
+      let fullAddress = formattedAddress
+      if (displayName && !formattedAddress.toLowerCase().startsWith(displayName.toLowerCase())) {
+        fullAddress = displayName + ', ' + formattedAddress
+      }
+
       const locationData: LocationData = {
-        formatted: placeData.formattedAddress || '',
+        formatted: fullAddress,
         city,
         state,
         country,

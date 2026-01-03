@@ -101,6 +101,37 @@ export async function getFreelancerProfile() {
   return profile;
 }
 
+export async function updateFreelancerProfile(data: {
+  name: string;
+  location: string;
+  photoUrl?: string;
+  equipmentList: string[];
+  portfolioLinks: string[];
+  whatsappNumber: string;
+}) {
+  await requireRole("freelancer");
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  const [profile] = await db
+    .update(freelancerProfiles)
+    .set({
+      ...data,
+      updatedAt: new Date(),
+    })
+    .where(eq(freelancerProfiles.userId, userId))
+    .returning();
+
+  revalidatePath("/freelancer");
+  revalidatePath("/freelancer/profile");
+
+  return { success: true, profile };
+}
+
 export async function getAllActiveJobs() {
   await requireRole("freelancer");
 
@@ -262,8 +293,23 @@ export async function respondToBooking(data: {
     .where(eq(bookingRequests.id, data.bookingId))
     .returning();
 
+  // If booking is accepted, mark the job as booked and deactivate it
+  if (data.accept) {
+    await db
+      .update(jobPosts)
+      .set({
+        status: "booked",
+        bookedFreelancerId: userId,
+        isActive: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(jobPosts.id, booking.jobId));
+  }
+
   revalidatePath("/freelancer/bookings");
   revalidatePath(`/freelancer/bookings/${data.bookingId}`);
+  revalidatePath("/company");
+  revalidatePath("/company/bookings");
 
   return { success: true, booking: updated };
 }

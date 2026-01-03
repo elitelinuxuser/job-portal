@@ -12,21 +12,23 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { createJobPost } from '@/lib/actions/jobs'
 import { useRouter } from 'next/navigation'
-import { Plus, X, Briefcase, FileText, MapPin, IndianRupee, Camera, Calendar, FileCheck, Sparkles, ChevronDown, Check } from 'lucide-react'
+import { Plus, X, Briefcase, FileText, MapPin, IndianRupee, Camera, Calendar, FileCheck, Sparkles } from 'lucide-react'
 import { LocationAutocomplete, LocationData } from '@/components/shared/location-autocomplete'
-import { JOB_TYPE_OPTIONS, JOB_TYPES, getJobTypeLabel } from '@/lib/constants/job-types'
+import { JOB_TYPE_OPTIONS, JOB_TYPES } from '@/lib/constants/job-types'
+import { CONTRACT_TERMS } from '@/lib/constants/contract-terms'
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from '@/lib/utils'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const schema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   description: z.string().min(20, 'Description must be at least 20 characters'),
   budget: z.string().optional(),
-  jobTypes: z.array(z.enum([
+  jobType: z.enum([
     JOB_TYPES.CANDID_PHOTOGRAPHER,
     JOB_TYPES.CINEMATOGRAPHER,
     JOB_TYPES.TRADITIONAL_PHOTOGRAPHER,
@@ -34,7 +36,7 @@ const schema = z.object({
     JOB_TYPES.PHOTO_EDITOR,
     JOB_TYPES.VIDEO_EDITOR,
     JOB_TYPES.DRONE,
-  ])).min(1, 'Please select at least one job type'),
+  ], { message: 'Please select a job type' }),
   contractAdditionalDetails: z.string().optional(),
 })
 
@@ -52,14 +54,9 @@ export function JobPostForm() {
   const [dates, setDates] = useState<DateTimeEntry[]>([{ date: '', startTime: '', endTime: '' }])
   const [locationData, setLocationData] = useState<LocationData | null>(null)
   const [locationError, setLocationError] = useState<string>('')
-  const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([])
-  const [contractOptions, setContractOptions] = useState({
-    contentPosting: false,
-    advancePayment: false,
-    paymentAfterShot: false,
-    contentOwnership: false,
-    sdCard: false,
-  })
+  const [selectedJobType, setSelectedJobType] = useState<string>('')
+  // Contract terms stored as array of term IDs
+  const [selectedContractTerms, setSelectedContractTerms] = useState<string[]>([])
 
   const {
     register,
@@ -70,12 +67,9 @@ export function JobPostForm() {
     resolver: zodResolver(schema),
   })
 
-  const toggleJobType = (jobType: string) => {
-    const newTypes = selectedJobTypes.includes(jobType)
-      ? selectedJobTypes.filter(t => t !== jobType)
-      : [...selectedJobTypes, jobType]
-    setSelectedJobTypes(newTypes)
-    setValue('jobTypes', newTypes as any)
+  const handleJobTypeChange = (jobType: string) => {
+    setSelectedJobType(jobType)
+    setValue('jobType', jobType as any)
   }
 
   function addDate() {
@@ -160,7 +154,11 @@ export function JobPostForm() {
     setLoading(true)
     try {
       const result = await createJobPost({
-        ...data,
+        title: data.title,
+        description: data.description,
+        budget: data.budget,
+        jobTypes: [data.jobType], // Convert single job type to array for database
+        contractAdditionalDetails: data.contractAdditionalDetails,
         location: locationData.formatted,
         locationFormatted: locationData.formatted,
         locationCity: locationData.city,
@@ -170,11 +168,7 @@ export function JobPostForm() {
         locationLongitude: locationData.longitude?.toString(),
         locationPlaceId: locationData.placeId,
         dates: validDateEntries,
-        contractContentPosting: contractOptions.contentPosting,
-        contractAdvancePayment: contractOptions.advancePayment,
-        contractPaymentAfterShot: contractOptions.paymentAfterShot,
-        contractContentOwnership: contractOptions.contentOwnership,
-        contractSdCard: contractOptions.sdCard,
+        contractTerms: selectedContractTerms,
       })
 
       if (result.success) {
@@ -282,72 +276,35 @@ export function JobPostForm() {
         </div>
       </div>
 
-      {/* Job Types - Multi Select */}
+      {/* Job Type - Single Select */}
       <div className="space-y-3">
         <Label className="text-base font-semibold text-gray-900 flex items-center gap-2">
-          <span className="w-8 h-8 bg-gradient-to-br from-pink-600 to-rose-600 rounded-lg flex items-center justify-center shrink-0">
+          <span className="w-8 h-8 bg-linear-to-br from-pink-600 to-rose-600 rounded-lg flex items-center justify-center shrink-0">
             <Camera className="w-4 h-4 text-white" />
           </span>
-          Select Job Types
+          Select Job Type
           <span className="text-red-500">*</span>
         </Label>
-        <p className="text-sm text-gray-600">Select all types that apply to this job</p>
         
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              role="combobox"
-              className="w-full justify-between h-auto min-h-[48px] px-4 py-3 text-left font-normal border-2 hover:border-pink-300"
-            >
-              <span className="truncate">
-                {selectedJobTypes.length === 0 ? (
-                  <span className="text-gray-500">Select job types...</span>
-                ) : selectedJobTypes.length === 1 ? (
-                  getJobTypeLabel(selectedJobTypes[0] as typeof JOB_TYPES[keyof typeof JOB_TYPES])
-                ) : (
-                  <span className="font-medium">{selectedJobTypes.length} types selected</span>
-                )}
-              </span>
-              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-full min-w-[400px] p-0" align="start" style={{ width: 'var(--radix-popover-trigger-width)' }}>
-            <div className="max-h-[300px] overflow-y-auto">
-              {JOB_TYPE_OPTIONS.map((option) => (
-                <div
-                  key={option.value}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-pink-50 transition-colors border-b border-gray-100 last:border-0",
-                    selectedJobTypes.includes(option.value) && "bg-pink-50"
-                  )}
-                  onClick={() => toggleJobType(option.value)}
-                >
-                  <Checkbox
-                    checked={selectedJobTypes.includes(option.value)}
-                    className="pointer-events-none"
-                  />
-                  <span className="text-sm flex-1 font-medium">{option.label}</span>
-                  {selectedJobTypes.includes(option.value) && (
-                    <Check className="h-4 w-4 text-pink-600" />
-                  )}
-                </div>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
+        <Select
+          value={selectedJobType}
+          onValueChange={handleJobTypeChange}
+        >
+          <SelectTrigger className="w-full !h-12 border-2 border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-colors rounded-xl text-base px-4">
+            <SelectValue placeholder="Select a job type..." />
+          </SelectTrigger>
+          <SelectContent className="w-full">
+            {JOB_TYPE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value} className="py-3">
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         
-        {selectedJobTypes.length > 0 && (
-          <p className="text-xs text-gray-600 mt-2 flex items-center gap-1">
-            <Check className="h-3 w-3 text-green-600" />
-            {selectedJobTypes.length} type{selectedJobTypes.length !== 1 ? 's' : ''} selected
-          </p>
-        )}
-        
-        {errors.jobTypes && (
+        {errors.jobType && (
           <p className="text-sm text-red-600 flex items-center gap-1">
-            <span>⚠️</span> {errors.jobTypes.message}
+            <span>⚠️</span> {errors.jobType.message}
           </p>
         )}
       </div>
@@ -447,72 +404,26 @@ export function JobPostForm() {
           Default Contract Terms
           <span className="text-sm font-normal text-gray-500">(Optional)</span>
         </Label>
-        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-6 space-y-3">
-          <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-blue-200 hover:bg-blue-50/50 transition-colors">
-            <Checkbox
-              id="contentPosting"
-              checked={contractOptions.contentPosting}
-              onCheckedChange={(checked) =>
-                setContractOptions({ ...contractOptions, contentPosting: !!checked })
-              }
-              className="w-5 h-5"
-            />
-            <Label htmlFor="contentPosting" className="font-medium text-gray-900 cursor-pointer flex-1">
-              Content Posting Rights
-            </Label>
-          </div>
-          <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-blue-200 hover:bg-blue-50/50 transition-colors">
-            <Checkbox
-              id="advancePayment"
-              checked={contractOptions.advancePayment}
-              onCheckedChange={(checked) =>
-                setContractOptions({ ...contractOptions, advancePayment: !!checked })
-              }
-              className="w-5 h-5"
-            />
-            <Label htmlFor="advancePayment" className="font-medium text-gray-900 cursor-pointer flex-1">
-              Advance Payment
-            </Label>
-          </div>
-          <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-blue-200 hover:bg-blue-50/50 transition-colors">
-            <Checkbox
-              id="paymentAfterShot"
-              checked={contractOptions.paymentAfterShot}
-              onCheckedChange={(checked) =>
-                setContractOptions({ ...contractOptions, paymentAfterShot: !!checked })
-              }
-              className="w-5 h-5"
-            />
-            <Label htmlFor="paymentAfterShot" className="font-medium text-gray-900 cursor-pointer flex-1">
-              Payment After Shot
-            </Label>
-          </div>
-          <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-blue-200 hover:bg-blue-50/50 transition-colors">
-            <Checkbox
-              id="contentOwnership"
-              checked={contractOptions.contentOwnership}
-              onCheckedChange={(checked) =>
-                setContractOptions({ ...contractOptions, contentOwnership: !!checked })
-              }
-              className="w-5 h-5"
-            />
-            <Label htmlFor="contentOwnership" className="font-medium text-gray-900 cursor-pointer flex-1">
-              Content Ownership
-            </Label>
-          </div>
-          <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-blue-200 hover:bg-blue-50/50 transition-colors">
-            <Checkbox
-              id="sdCard"
-              checked={contractOptions.sdCard}
-              onCheckedChange={(checked) =>
-                setContractOptions({ ...contractOptions, sdCard: !!checked })
-              }
-              className="w-5 h-5"
-            />
-            <Label htmlFor="sdCard" className="font-medium text-gray-900 cursor-pointer flex-1">
-              SD Card Handover
-            </Label>
-          </div>
+        <div className="bg-linear-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-6 space-y-3">
+          {CONTRACT_TERMS.map((term) => (
+            <div key={term.id} className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-blue-200 hover:bg-blue-50/50 transition-colors">
+              <Checkbox
+                id={term.id}
+                checked={selectedContractTerms.includes(term.id)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedContractTerms([...selectedContractTerms, term.id])
+                  } else {
+                    setSelectedContractTerms(selectedContractTerms.filter(id => id !== term.id))
+                  }
+                }}
+                className="w-5 h-5"
+              />
+              <Label htmlFor={term.id} className="font-medium text-gray-900 cursor-pointer flex-1">
+                {term.label}
+              </Label>
+            </div>
+          ))}
         </div>
       </div>
 

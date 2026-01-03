@@ -14,6 +14,7 @@ import {
   CheckCircle2
 } from 'lucide-react'
 import Image from 'next/image'
+import { ReportDialog } from '@/components/shared/report-dialog'
 
 export default async function FreelancerPublicProfile({ 
   params 
@@ -79,6 +80,11 @@ export default async function FreelancerPublicProfile({
                   >
                     {freelancer.verificationStatus === 'verified' ? 'Verified' : 'Pending Verification'}
                   </Badge>
+                  <ReportDialog
+                    reportType="freelancer"
+                    targetId={id}
+                    targetName={freelancer.name}
+                  />
                 </div>
                 
                 <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4">

@@ -34,11 +34,9 @@ export interface Job {
   locationPlaceId?: string | null;
   budget?: string;
   jobTypes: JobType[];
-  contractContentPosting: boolean;
-  contractAdvancePayment: boolean;
-  contractPaymentAfterShot: boolean;
-  contractContentOwnership: boolean;
-  contractSdCard: boolean;
+  // Contract terms stored as JSONB array of term IDs
+  // See lib/constants/contract-terms.ts for available terms
+  contractTerms: string[];
   contractAdditionalDetails?: string;
 }
 
@@ -221,7 +219,7 @@ export async function createBookingRequest(data: {
   // Determine budget: customBudget > proposedPrice > job.budget
   const finalBudget = data.customBudget ?? data.proposedPrice ?? job.budget;
 
-  // Create contract details object
+  // Create contract details object with extensible contractTerms array
   const contractDetails = {
     title: job.title,
     description: job.description,
@@ -229,11 +227,8 @@ export async function createBookingRequest(data: {
     location: job.location,
     budget: finalBudget,
     jobTypes: job.jobTypes,
-    contractContentPosting: job.contractContentPosting,
-    contractAdvancePayment: job.contractAdvancePayment,
-    contractPaymentAfterShot: job.contractPaymentAfterShot,
-    contractContentOwnership: job.contractContentOwnership,
-    contractSdCard: job.contractSdCard,
+    // Use the new contractTerms JSONB array format
+    contractTerms: (job.contractTerms as string[]) || [],
     contractAdditionalDetails: job.contractAdditionalDetails,
   };
 
@@ -247,16 +242,8 @@ export async function createBookingRequest(data: {
     })
     .returning();
 
-  // Auto-deactivate job and mark as booked
-  await db
-    .update(jobPosts)
-    .set({
-      status: "booked",
-      bookedFreelancerId: data.freelancerId,
-      isActive: false,
-      updatedAt: new Date(),
-    })
-    .where(eq(jobPosts.id, data.jobId));
+  // Note: Job is NOT deactivated here - it remains active until the booking is accepted
+  // The job will be marked as booked and deactivated in respondToBooking when freelancer accepts
 
   // Send WhatsApp notification to freelancer about booking request
   try {

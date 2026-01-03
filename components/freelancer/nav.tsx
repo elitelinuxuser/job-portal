@@ -9,7 +9,8 @@ import {
   Menu,
   X,
   FileText,
-  IndianRupee
+  IndianRupee,
+  User
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -74,6 +75,15 @@ export function FreelancerNav() {
                 <IndianRupee className="w-4 h-4" />
               </div>
               <span>Payments</span>
+            </Link>
+            <Link 
+              href="/freelancer/profile" 
+              className="flex items-center space-x-2 px-4 py-2.5 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 font-medium group"
+            >
+              <div className="w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-blue-100 rounded-lg transition-colors">
+                <User className="w-4 h-4" />
+              </div>
+              <span>My Profile</span>
             </Link>
           </div>
 
@@ -142,6 +152,16 @@ export function FreelancerNav() {
                 <IndianRupee className="w-5 h-5" />
               </div>
               <span className="font-medium">Payments</span>
+            </Link>
+            <Link 
+              href="/freelancer/profile"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg">
+                <User className="w-5 h-5" />
+              </div>
+              <span className="font-medium">My Profile</span>
             </Link>
           </div>
         )}

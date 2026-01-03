@@ -60,6 +60,17 @@ export const paymentModeEnum = pgEnum("payment_mode", [
   "upi",
   "net_banking",
 ]);
+export const reportTypeEnum = pgEnum("report_type", [
+  "job_post",
+  "freelancer",
+  "company",
+]);
+export const reportStatusEnum = pgEnum("report_status", [
+  "pending",
+  "reviewed",
+  "resolved",
+  "dismissed",
+]);
 export const jobTypeEnum = pgEnum("job_type", [
   "candid_photographer",
   "cinematographer",
@@ -114,6 +125,10 @@ export const companyProfiles = pgTable("company_profiles", {
   verificationStatus: verificationStatusEnum("verification_status")
     .notNull()
     .default("pending"),
+  isActive: boolean("is_active").notNull().default(true),
+  deactivatedAt: timestamp("deactivated_at"),
+  deactivatedBy: text("deactivated_by").references(() => users.id),
+  deactivationReason: text("deactivation_reason"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -141,6 +156,10 @@ export const freelancerProfiles = pgTable("freelancer_profiles", {
     .default([]),
   whatsappNumber: varchar("whatsapp_number", { length: 15 }).notNull(),
   idProofUrl: text("id_proof_url"),
+  isActive: boolean("is_active").notNull().default(true),
+  deactivatedAt: timestamp("deactivated_at"),
+  deactivatedBy: text("deactivated_by").references(() => users.id),
+  deactivationReason: text("deactivation_reason"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -170,7 +189,13 @@ export const jobPosts = pgTable("job_posts", {
   budget: decimal("budget", { precision: 10, scale: 2 }),
   jobTypes: jobTypeEnum("job_types").array().notNull(),
 
-  // Contract details with checkboxes
+  // Contract terms stored as JSONB array of term IDs (e.g., ["sdCard", "paymentAfterShot"])
+  // See lib/constants/contract-terms.ts for available terms
+  contractTerms: jsonb("contract_terms").$type<string[]>().default([]),
+  contractAdditionalDetails: text("contract_additional_details"),
+
+  // Legacy boolean fields - kept for backward compatibility during migration
+  // TODO: Remove these after migration is complete
   contractContentPosting: boolean("contract_content_posting")
     .notNull()
     .default(false),
@@ -184,7 +209,9 @@ export const jobPosts = pgTable("job_posts", {
     .notNull()
     .default(false),
   contractSdCard: boolean("contract_sd_card").notNull().default(false),
-  contractAdditionalDetails: text("contract_additional_details"),
+  contractTransportationAllowance: boolean("contract_transportation_allowance")
+    .notNull()
+    .default(false),
 
   isActive: boolean("is_active").notNull().default(true),
   status: jobStatusEnum("status").notNull().default("active"),
@@ -245,6 +272,27 @@ export const payments = pgTable("payments", {
   paymentNotes: text("payment_notes"), // notes when paying
   declineReason: text("decline_reason"), // reason for declining request
   disputeReason: text("dispute_reason"), // reason for dispute
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Reports table
+export const reports = pgTable("reports", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  reportType: reportTypeEnum("report_type").notNull(),
+  // The ID of the reported item (job post ID, freelancer user ID, or company user ID)
+  targetId: text("target_id").notNull(),
+  // Who submitted the report
+  reportedBy: text("reported_by")
+    .notNull()
+    .references(() => users.id),
+  reason: text("reason").notNull(),
+  description: text("description"),
+  status: reportStatusEnum("status").notNull().default("pending"),
+  // Admin who reviewed the report
+  reviewedBy: text("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  adminNotes: text("admin_notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -327,5 +375,16 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   booking: one(bookingRequests, {
     fields: [payments.bookingId],
     references: [bookingRequests.id],
+  }),
+}));
+
+export const reportsRelations = relations(reports, ({ one }) => ({
+  reporter: one(users, {
+    fields: [reports.reportedBy],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [reports.reviewedBy],
+    references: [users.id],
   }),
 }));

@@ -1,4 +1,5 @@
 import { getJobPostById } from '@/lib/actions/jobs'
+import { getSelectedContractTerms } from '@/lib/constants/contract-terms'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,7 @@ import { format } from 'date-fns'
 import { getJobTypeLabel } from '@/lib/constants/job-types'
 import { formatTimeRange } from '@/lib/utils/date-filters'
 import { CompanyJobActions } from '@/components/company/company-job-actions'
+import { LocationLink } from '@/components/shared/location-link'
 
 export default async function CompanyJobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -96,7 +98,13 @@ export default async function CompanyJobDetailPage({ params }: { params: Promise
                   </div>
                   <div className="min-w-0 flex-1 text-sm">
                     <p className="text-blue-700 font-medium">Location</p>
-                    <p className="font-semibold text-gray-900 wrap-break-word">{job.location}</p>
+                    <LocationLink
+                      location={job.locationFormatted || job.location}
+                      latitude={job.locationLatitude}
+                      longitude={job.locationLongitude}
+                      placeId={job.locationPlaceId}
+                      className="font-semibold text-gray-900"
+                    />
                   </div>
                 </div>
 
@@ -146,36 +154,12 @@ export default async function CompanyJobDetailPage({ params }: { params: Promise
                 Contract Terms
               </h2>
               <div className="grid sm:grid-cols-2 gap-3">
-                {job.contractContentPosting && (
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                {getSelectedContractTerms(job.contractTerms as string[] | null).map((term) => (
+                  <div key={term.id} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
                     <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">Content Posting Rights</span>
+                    <span className="text-sm font-medium text-gray-900">{term.label}</span>
                   </div>
-                )}
-                {job.contractAdvancePayment && (
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">Advance Payment</span>
-                  </div>
-                )}
-                {job.contractPaymentAfterShot && (
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">Payment After Shot</span>
-                  </div>
-                )}
-                {job.contractContentOwnership && (
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">Content Ownership</span>
-                  </div>
-                )}
-                {job.contractSdCard && (
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">SD Card Handover</span>
-                  </div>
-                )}
+                ))}
               </div>
               {job.contractAdditionalDetails && (
                 <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">

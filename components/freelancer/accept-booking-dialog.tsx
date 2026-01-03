@@ -15,6 +15,7 @@ import { respondToBooking } from '@/lib/actions/freelancer'
 import { toast } from 'sonner'
 import { CheckCircle, FileText, Calendar, MapPin, DollarSign, Clock } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
+import { getSelectedContractTerms } from '@/lib/constants/contract-terms'
 
 export function AcceptBookingDialog({ booking }: { booking: any }) {
   const [open, setOpen] = useState(false)
@@ -159,51 +160,15 @@ END:VCALENDAR`
             <div className="space-y-4 py-4">
               <div className="p-4 bg-gray-50 rounded-lg space-y-3">
                 <h4 className="font-semibold">Contract Terms:</h4>
-                {contract.contractContentPosting && (
-                  <div className="flex items-start gap-2">
+                {getSelectedContractTerms(contract.contractTerms as string[] | null).map((term) => (
+                  <div key={term.id} className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                     <div>
-                      <p className="font-medium">Content Posting Rights</p>
-                      <p className="text-sm text-gray-600">Company has rights to post content on their platforms</p>
+                      <p className="font-medium">{term.label}</p>
+                      <p className="text-sm text-gray-600">{term.description}</p>
                     </div>
                   </div>
-                )}
-                {contract.contractAdvancePayment && (
-                  <div className="flex items-start gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Advance Payment</p>
-                      <p className="text-sm text-gray-600">Partial payment to be made in advance</p>
-                    </div>
-                  </div>
-                )}
-                {contract.contractPaymentAfterShot && (
-                  <div className="flex items-start gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Payment After Shot</p>
-                      <p className="text-sm text-gray-600">Remaining payment after work completion</p>
-                    </div>
-                  </div>
-                )}
-                {contract.contractContentOwnership && (
-                  <div className="flex items-start gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Content Ownership</p>
-                      <p className="text-sm text-gray-600">Ownership rights as per agreement</p>
-                    </div>
-                  </div>
-                )}
-                {contract.contractSdCard && (
-                  <div className="flex items-start gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium">SD Card Handover</p>
-                      <p className="text-sm text-gray-600">Physical SD card to be provided</p>
-                    </div>
-                  </div>
-                )}
+                ))}
               </div>
 
               {contract.contractAdditionalDetails && (

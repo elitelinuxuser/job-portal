@@ -169,7 +169,7 @@ export function JobsListClient({ initialJobs }: JobsListClientProps) {
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs text-gray-500">Location</p>
-                        <p className="font-medium text-gray-900 truncate">{job.location}</p>
+                        <p className="font-medium text-gray-900 truncate">{job.locationFormatted || job.location}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm">

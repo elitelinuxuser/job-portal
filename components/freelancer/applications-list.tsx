@@ -48,6 +48,7 @@ interface Application {
     description: string
     budget: string | null
     location: string
+    locationFormatted?: string | null
     jobTypes: JobType[]
     dates: Array<{ date: string }>
     isActive: boolean
@@ -215,7 +216,7 @@ export function ApplicationsList({ applications }: ApplicationsListProps) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-blue-700 font-medium">Location</p>
-                      <p className="font-semibold text-gray-900 text-sm truncate">{application.job.location}</p>
+                      <p className="font-semibold text-gray-900 text-sm truncate">{application.job.locationFormatted || application.job.location}</p>
                     </div>
                   </div>
                   
