@@ -555,15 +555,15 @@ export function LandingPage() {
             </p>
 
             <div className="flex items-center gap-6 text-sm text-slate-600">
-              <Link href="#" className="hover:text-slate-900 transition-colors">
+              <Link href="/terms" className="hover:text-slate-900 transition-colors">
                 Privacy
               </Link>
-              <Link href="#" className="hover:text-slate-900 transition-colors">
+              <Link href="/terms" className="hover:text-slate-900 transition-colors">
                 Terms
               </Link>
-              <Link href="#" className="hover:text-slate-900 transition-colors">
+              {/* <Link href="#" className="hover:text-slate-900 transition-colors">
                 Contact
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
