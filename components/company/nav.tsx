@@ -16,7 +16,11 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
-export function CompanyNav() {
+interface CompanyNavProps {
+  unreadResponsesCount?: number
+}
+
+export function CompanyNav({ unreadResponsesCount = 0 }: CompanyNavProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
@@ -55,8 +59,13 @@ export function CompanyNav() {
               href="/company/responses" 
               className="flex items-center space-x-2 px-4 py-2.5 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-200 font-medium group"
             >
-              <div className="w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-indigo-100 rounded-lg transition-colors">
+              <div className="relative w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-indigo-100 rounded-lg transition-colors">
                 <Inbox className="w-4 h-4" />
+                {unreadResponsesCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full">
+                    {unreadResponsesCount > 99 ? '99+' : unreadResponsesCount}
+                  </span>
+                )}
               </div>
               <span>Responses</span>
             </Link>
@@ -94,13 +103,18 @@ export function CompanyNav() {
             {/* Hamburger Menu - Mobile */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              className="md:hidden relative p-2 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? (
                 <X className="w-6 h-6" />
               ) : (
                 <Menu className="w-6 h-6" />
+              )}
+              {unreadResponsesCount > 0 && !mobileMenuOpen && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full">
+                  {unreadResponsesCount > 99 ? '99+' : unreadResponsesCount}
+                </span>
               )}
             </button>
 
@@ -143,8 +157,13 @@ export function CompanyNav() {
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
             >
-              <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg">
+              <div className="relative w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg">
                 <Inbox className="w-5 h-5" />
+                {unreadResponsesCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full">
+                    {unreadResponsesCount > 99 ? '99+' : unreadResponsesCount}
+                  </span>
+                )}
               </div>
               <span className="font-medium">Responses</span>
             </Link>

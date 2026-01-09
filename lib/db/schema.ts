@@ -18,11 +18,6 @@ export const userRoleEnum = pgEnum("user_role", [
   "company",
   "freelancer",
 ]);
-export const inviteStatusEnum = pgEnum("invite_status", [
-  "pending",
-  "accepted",
-  "expired",
-]);
 export const onboardingStatusEnum = pgEnum("onboarding_status", [
   "incomplete",
   "complete",
@@ -91,21 +86,6 @@ export const users = pgTable("users", {
     .default("incomplete"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-// Invites table
-export const invites = pgTable("invites", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  code: varchar("code", { length: 50 }).notNull().unique(),
-  role: userRoleEnum("role").notNull(),
-  createdBy: text("created_by")
-    .notNull()
-    .references(() => users.id),
-  status: inviteStatusEnum("status").notNull().default("pending"),
-  expiresAt: timestamp("expires_at"),
-  usedAt: timestamp("used_at"),
-  usedBy: text("used_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Company profiles
@@ -298,7 +278,7 @@ export const reports = pgTable("reports", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ one, many }) => ({
+export const usersRelations = relations(users, ({ one }) => ({
   companyProfile: one(companyProfiles, {
     fields: [users.id],
     references: [companyProfiles.userId],
@@ -307,28 +287,25 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.id],
     references: [freelancerProfiles.userId],
   }),
-  invitesCreated: many(invites),
 }));
 
 export const companyProfilesRelations = relations(
   companyProfiles,
-  ({ one, many }) => ({
+  ({ one }) => ({
     user: one(users, {
       fields: [companyProfiles.userId],
       references: [users.id],
     }),
-    jobPosts: many(jobPosts),
   })
 );
 
 export const freelancerProfilesRelations = relations(
   freelancerProfiles,
-  ({ one, many }) => ({
+  ({ one }) => ({
     user: one(users, {
       fields: [freelancerProfiles.userId],
       references: [users.id],
     }),
-    responses: many(jobResponses),
   })
 );
 

@@ -55,6 +55,8 @@ export async function createJobPost(data: Job) {
     .values({
       companyId: userId,
       ...data,
+      // Convert empty string to null for optional decimal field
+      budget: data.budget && data.budget.trim() !== "" ? data.budget : null,
     })
     .returning();
 
@@ -62,6 +64,33 @@ export async function createJobPost(data: Job) {
   revalidatePath("/freelancer");
 
   return { success: true, job };
+}
+
+export async function getUnreadResponsesCount() {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return 0;
+  }
+
+  // Get all job posts for this company with their responses
+  const jobs = await db.query.jobPosts.findMany({
+    where: eq(jobPosts.companyId, userId),
+    with: {
+      responses: {
+        columns: {
+          viewedAt: true,
+        },
+      },
+    },
+  });
+
+  // Count total unread responses across all jobs
+  const totalUnread = jobs.reduce((count, job) => {
+    return count + job.responses.filter((r) => r.viewedAt === null).length;
+  }, 0);
+
+  return totalUnread;
 }
 
 export async function getCompanyJobs() {
