@@ -495,6 +495,23 @@ export function LandingPage() {
               ))}
             </div>
           </div>
+
+          {/* Video Tutorial */}
+          <div className="mt-16 max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-semibold text-white mb-2">Watch How It Works</h3>
+              <p className="text-slate-400">See the platform in action</p>
+            </div>
+            <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
+              <iframe
+                src="https://www.youtube.com/embed/videoseries?list=PLlErPG1lqtO2spppW7x5JkQn1frGBaliV"
+                title="HFree Platform Tutorial"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              />
+            </div>
+          </div>
         </div>
       </section>
 
