@@ -47,7 +47,7 @@ const companyProblems = [
   {
     icon: CheckCircle2,
     title: "No Confusion",
-    description: "Clear contracts and transparent terms for every booking",
+    description: "Clear contracts and transparent terms for all your bookings",
   },
 ];
 
