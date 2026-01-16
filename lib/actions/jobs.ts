@@ -41,6 +41,17 @@ export interface Job {
   contractAdditionalDetails?: string;
 }
 
+export interface ContractDetails {
+  title: string;
+  description: string;
+  dates: Array<{ date: string; startTime?: string; endTime?: string }>;
+  location: string;
+  budget: string | number | null;
+  jobTypes: JobType[];
+  contractTerms: string[];
+  contractAdditionalDetails?: string | null;
+}
+
 export async function createJobPost(data: Job) {
   await requireRole("company");
 
@@ -127,7 +138,7 @@ export async function getCompanyJobs() {
           const bookingRequest = await db.query.bookingRequests.findFirst({
             where: and(
               eq(bookingRequests.jobId, job.id),
-              eq(bookingRequests.freelancerId, response.freelancerId)
+              eq(bookingRequests.freelancerId, response.freelancerId),
             ),
           });
 
@@ -135,12 +146,12 @@ export async function getCompanyJobs() {
             ...response,
             bookingRequest: bookingRequest || null,
           };
-        })
+        }),
       );
 
       // Count unread responses (viewedAt is null)
       const unreadResponseCount = responsesWithBookings.filter(
-        (r) => r.viewedAt === null
+        (r) => r.viewedAt === null,
       ).length;
 
       return {
@@ -148,7 +159,7 @@ export async function getCompanyJobs() {
         responses: responsesWithBookings,
         unreadResponseCount,
       };
-    })
+    }),
   );
 
   return jobsWithBookingRequests;
@@ -241,7 +252,7 @@ export async function createBookingRequest(data: {
   const existingBooking = await db.query.bookingRequests.findFirst({
     where: and(
       eq(bookingRequests.jobId, data.jobId),
-      eq(bookingRequests.freelancerId, data.freelancerId)
+      eq(bookingRequests.freelancerId, data.freelancerId),
     ),
   });
 
@@ -306,7 +317,7 @@ export async function createBookingRequest(data: {
         company.companyName,
         job.title,
         datesStr,
-        booking.id
+        booking.id,
       );
     }
   } catch (error) {
@@ -337,7 +348,7 @@ export async function updateBookingRequest(data: {
   const existingBooking = await db.query.bookingRequests.findFirst({
     where: and(
       eq(bookingRequests.id, data.bookingId),
-      eq(bookingRequests.companyId, userId)
+      eq(bookingRequests.companyId, userId),
     ),
   });
 
@@ -357,9 +368,8 @@ export async function updateBookingRequest(data: {
   }
 
   // Update contract details with new budget
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updatedContractDetails = {
-    ...(existingBooking.contractDetails as any),
+  const updatedContractDetails: ContractDetails = {
+    ...(existingBooking.contractDetails as unknown as ContractDetails),
     budget: data.customBudget,
   };
 
@@ -422,7 +432,7 @@ export async function markBookingAsPaid(data: {
   const booking = await db.query.bookingRequests.findFirst({
     where: and(
       eq(bookingRequests.id, data.bookingId),
-      eq(bookingRequests.companyId, userId)
+      eq(bookingRequests.companyId, userId),
     ),
   });
 
@@ -597,7 +607,7 @@ export async function completeJob(jobId: string) {
           freelancer.freelancerProfile.whatsappNumber,
           job.title,
           company.companyName,
-          booking.id
+          booking.id,
         );
       }
     }
@@ -677,7 +687,7 @@ export async function getCompanyPayments() {
 
   // Filter payments where the booking belongs to this company
   const companyPayments = allPayments.filter(
-    (payment) => payment.booking.companyId === userId
+    (payment) => payment.booking.companyId === userId,
   );
 
   return companyPayments;
@@ -752,7 +762,7 @@ export async function payPaymentRequest(data: {
         company.companyName,
         updated.amount,
         bookingWithDetails.job.title,
-        bookingWithDetails.id
+        bookingWithDetails.id,
       );
     }
   } catch (error) {
@@ -823,7 +833,7 @@ export async function declinePaymentRequest(data: {
         updated.amount,
         bookingWithDetails.job.title,
         bookingWithDetails.id,
-        data.reason
+        data.reason,
       );
     }
   } catch (error) {
@@ -853,7 +863,7 @@ export async function createDirectPayment(data: {
   const booking = await db.query.bookingRequests.findFirst({
     where: and(
       eq(bookingRequests.id, data.bookingId),
-      eq(bookingRequests.companyId, userId)
+      eq(bookingRequests.companyId, userId),
     ),
   });
 

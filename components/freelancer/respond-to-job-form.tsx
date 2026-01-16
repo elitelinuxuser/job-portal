@@ -1,50 +1,54 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { respondToJob } from '@/lib/actions/freelancer'
-import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
-import { Send, IndianRupee } from 'lucide-react'
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { respondToJob } from "@/lib/actions/freelancer";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { Send, IndianRupee } from "lucide-react";
 
-export function RespondToJobForm({ 
-  jobId, 
+export function RespondToJobForm({
+  jobId,
   originalBudget,
-  onSuccess 
-}: { 
-  jobId: string
-  originalBudget?: string | null
-  onSuccess?: () => void 
+  onSuccessAction,
+}: {
+  jobId: string;
+  originalBudget?: string | null;
+  onSuccessAction?: () => void;
 }) {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const [proposedPrice, setProposedPrice] = useState(originalBudget || '')
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [proposedPrice, setProposedPrice] = useState(originalBudget || "");
 
   async function handleApply() {
-    setLoading(true)
+    setLoading(true);
     try {
       const result = await respondToJob({
         jobId,
-        status: 'interested',
+        status: "interested",
         message: message || undefined,
         proposedPrice: proposedPrice || undefined,
-      })
+      });
 
       if (result.success) {
-        toast.success('Application submitted! The company will review your application.')
-        onSuccess?.()
-        router.push('/freelancer')
-        router.refresh()
+        toast.success(
+          "Application submitted! The company will review your application.",
+        );
+        onSuccessAction?.();
+        router.push("/freelancer");
+        router.refresh();
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to submit application')
-      console.error(error)
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to submit application",
+      );
+      console.error(error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -52,7 +56,10 @@ export function RespondToJobForm({
     <div className="space-y-5">
       {/* Proposed Price */}
       <div className="space-y-3">
-        <Label htmlFor="proposedPrice" className="text-base font-semibold text-gray-900 flex items-center gap-2">
+        <Label
+          htmlFor="proposedPrice"
+          className="text-base font-semibold text-gray-900 flex items-center gap-2"
+        >
           <span className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
             <IndianRupee className="w-4 h-4 text-green-600" />
           </span>
@@ -81,7 +88,10 @@ export function RespondToJobForm({
 
       {/* Message */}
       <div className="space-y-3">
-        <Label htmlFor="message" className="text-base font-semibold text-gray-900 flex items-center gap-2">
+        <Label
+          htmlFor="message"
+          className="text-base font-semibold text-gray-900 flex items-center gap-2"
+        >
           <span className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
             <Send className="w-4 h-4 text-blue-600" />
           </span>
@@ -102,16 +112,13 @@ export function RespondToJobForm({
       </div>
 
       <Button
-        className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg hover:shadow-xl transition-all duration-200"
+        className="w-full h-14 text-lg font-semibold bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-lg hover:shadow-xl transition-all duration-200"
         onClick={handleApply}
         disabled={loading}
       >
         <Send className="w-5 h-5 mr-2" />
-        {loading ? 'Submitting Application...' : 'Apply Now'}
+        {loading ? "Submitting Application..." : "Apply Now"}
       </Button>
     </div>
-  )
+  );
 }
-
-
-

@@ -1,40 +1,44 @@
-import { auth, clerkClient } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
-import { LandingPage } from '@/components/landing/landing-page'
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { LandingPage } from "@/components/landing/landing-page";
 
 export default async function HomePage() {
-  const { userId, sessionClaims } = await auth()
+  const { userId, sessionClaims } = await auth();
 
   if (!userId) {
-    return <LandingPage />
+    return <LandingPage />;
   }
 
   // Get role from session claims first (faster)
-  const publicMetadata = (sessionClaims as any)?.publicMetadata as { role?: string; onboardingStatus?: string } | undefined
-  let role = publicMetadata?.role
-  let onboardingStatus = publicMetadata?.onboardingStatus
+  const publicMetadata = sessionClaims?.publicMetadata as
+    | { role?: string; onboardingStatus?: string }
+    | undefined;
+  let role = publicMetadata?.role;
+  let onboardingStatus = publicMetadata?.onboardingStatus;
 
   // Only fetch from Clerk API if session claims are missing
   if (!role) {
-    const client = await clerkClient()
-    const user = await client.users.getUser(userId)
-    role = user.publicMetadata?.role as string | undefined
-    onboardingStatus = user.publicMetadata?.onboardingStatus as string | undefined
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    role = user.publicMetadata?.role as string | undefined;
+    onboardingStatus = user.publicMetadata?.onboardingStatus as
+      | string
+      | undefined;
   }
 
   // Redirect based on role
-  if (role === 'admin') {
-    redirect('/admin')
-  } else if (role === 'company') {
-    if (onboardingStatus === 'incomplete') {
-      redirect('/company/onboarding')
+  if (role === "admin") {
+    redirect("/admin");
+  } else if (role === "company") {
+    if (onboardingStatus === "incomplete") {
+      redirect("/company/onboarding");
     }
-    redirect('/company')
-  } else if (role === 'freelancer') {
-    if (onboardingStatus === 'incomplete') {
-      redirect('/freelancer/onboarding')
+    redirect("/company");
+  } else if (role === "freelancer") {
+    if (onboardingStatus === "incomplete") {
+      redirect("/freelancer/onboarding");
     }
-    redirect('/freelancer')
+    redirect("/freelancer");
   }
 
   // If no role assigned, show error message
@@ -43,9 +47,10 @@ export default async function HomePage() {
       <div className="text-center">
         <h1 className="text-2xl font-bold">Access Denied</h1>
         <p className="mt-2 text-gray-600">
-          Your account doesn't have a role assigned. Please contact an administrator.
+          Your account doesn&apos;t have a role assigned. Please contact an
+          administrator.
         </p>
       </div>
     </div>
-  )
+  );
 }
