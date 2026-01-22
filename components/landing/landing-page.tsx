@@ -395,7 +395,19 @@ export function LandingPage() {
                 className="w-full sm:w-auto text-base px-8 py-6"
                 asChild
               >
-                <Link href="#how-it-works">See How It Works</Link>
+                <Link
+                  href="#how-it-works"
+                  onClick={() => {
+                    if (typeof window !== "undefined") {
+                      (window as unknown as { dataLayer?: { push: (data: Record<string, unknown>) => void } }).dataLayer?.push({
+                        event: "see_how_it_works_click",
+                        user_type: userType,
+                      });
+                    }
+                  }}
+                >
+                  See How It Works
+                </Link>
               </Button>
             </div>
           </div>
